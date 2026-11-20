@@ -1,0 +1,38 @@
+/*
+  Pantrix design tokens – taken from the Figma file "PantryX".
+  Change a colour here and it changes everywhere in the app.
+*/
+:root {
+  /* Colours */
+  --color-bg: #faf9f4;          /* cream app background */
+  --color-surface: #ffffff;     /* white cards */
+  --color-surface-soft: #f5f4ea;/* icon tiles */
+  --color-tile: #eaf0e0;        /* sage stat tiles, active tab */
+  --color-accent: #ddebcb;      /* light green button on dark green */
+  --color-primary: #245b42;     /* main green: buttons, links */
+  --color-text: #183e32;        /* dark green text */
+  --color-text-muted: #67776c;  /* grey-green secondary text */
+  --color-on-primary: #ffffff;
+  --color-on-primary-muted: #e4eddf;
+  --color-border: #e5e8dd;
+
+  /* Freshness traffic light (step 3 of our plan) */
+  --fresh-red-bg: #fbe5e1;   --fresh-red-text: #a3352b;
+  --fresh-amber-bg: #fff0d8; --fresh-amber-text: #8b5c24;
+  --fresh-green-bg: #eaf0e0; --fresh-green-text: #245b42;
+  --fresh-grey-bg: #f0efe8;  --fresh-grey-text: #67776c;
+
+  /* Shape */
+  --radius-xl: 24px;  /* hero card */
+  --radius-lg: 18px;  /* lists */
+  --radius-md: 14px;  /* buttons */
+  --radius-sm: 10px;  /* icon tiles */
+  --radius-xs: 7px;   /* badges */
+
+  /* Spacing */
+  --page-padding: 24px;
+  --gap: 12px;
+
+  /* Type */
+  --font: 'Inter Variable', -apple-system, system-ui, sans-serif;
+}

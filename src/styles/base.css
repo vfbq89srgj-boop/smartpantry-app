@@ -1,0 +1,32 @@
+/* Basic rules for the whole app */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+
+h1, h2, h3, p { margin: 0; }
+
+/* A full-width primary button, used on several screens */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 48px;
+  background: var(--color-primary); color: var(--color-on-primary);
+  border-radius: var(--radius-md);
+  font-size: 15px; font-weight: 600;
+}
+.btn-primary:active { opacity: 0.85; }
+
+/* White rounded card */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
