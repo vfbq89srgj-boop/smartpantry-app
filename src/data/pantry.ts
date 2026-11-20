@@ -6,6 +6,7 @@
   so later we only replace the sample list with the API response.
 */
 import { computed, reactive } from 'vue'
+import { apiConfigured, apiFetch } from '../api/client'
 
 export type StoragePlace = 'Refrigerator' | 'Freezer' | 'Pantry' | 'Room Temperature'
 export type ItemStatus = 'in_stock' | 'eaten' | 'thrown_away'
@@ -47,9 +48,62 @@ const sampleItems: PantryItem[] = [
 
 /** The shared state – every screen reads from here */
 export const pantry = reactive({
-  items: sampleItems,
+  // Demo mode (no VITE_API_URL): sample data. Otherwise filled by loadItems().
+  items: apiConfigured ? ([] as PantryItem[]) : sampleItems,
+  loading: false,
+  error: '',
   shoppingListCount: 5,
 })
+
+// ---------------------------------------------------------------------------
+// Backend: GET /api/v1/Items and POST /api/v1/Items (see Smart-Pantry/docs/API.md)
+// ---------------------------------------------------------------------------
+
+/** Eaten / thrown away is not in the backend yet, so we remember it on the phone */
+const STATUS_KEY = 'pantrix.statuses'
+function savedStatuses(): Record<number, { status: ItemStatus; at: string | null }> {
+  try {
+    return JSON.parse(localStorage.getItem(STATUS_KEY) ?? '{}')
+  } catch {
+    return {}
+  }
+}
+function rememberStatus(id: number, status: ItemStatus, at: string | null) {
+  try {
+    const all = savedStatuses()
+    if (status === 'in_stock') delete all[id]
+    else all[id] = { status, at }
+    localStorage.setItem(STATUS_KEY, JSON.stringify(all))
+  } catch {
+    // storage not available – the status is then only kept until the app closes
+  }
+}
+
+/** Loads all of the user's items from the backend (all pages) */
+export async function loadItems() {
+  if (!apiConfigured) return
+  pantry.loading = true
+  pantry.error = ''
+  try {
+    const statuses = savedStatuses()
+    const all: PantryItem[] = []
+    for (let page = 1; ; page++) {
+      const res = await apiFetch(`/api/v1/Items?page=${page}&pageSize=100`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = (await res.json()) as { items: Omit<PantryItem, 'status' | 'statusChangedAt'>[]; totalCount: number }
+      for (const item of data.items) {
+        const saved = statuses[item.id]
+        all.push({ ...item, status: saved?.status ?? 'in_stock', statusChangedAt: saved?.at ?? null })
+      }
+      if (all.length >= data.totalCount || data.items.length === 0) break
+    }
+    pantry.items = all
+  } catch {
+    pantry.error = 'Could not load your pantry. Is the backend running?'
+  } finally {
+    pantry.loading = false
+  }
+}
 
 /** Items that are still in the pantry */
 export const inStock = computed(() => pantry.items.filter((i) => i.status === 'in_stock'))
@@ -69,13 +123,37 @@ export function setStatus(id: number, status: ItemStatus) {
   if (!item) return
   item.status = status
   item.statusChangedAt = status === 'in_stock' ? null : new Date().toISOString()
+  rememberStatus(id, status, item.statusChangedAt)
 }
 
-/** Adds confirmed items from a receipt scan (step 1: "Save to pantry") */
-export function addItems(newItems: Omit<PantryItem, 'id' | 'status' | 'statusChangedAt'>[]) {
-  let nextId = Math.max(0, ...pantry.items.map((i) => i.id)) + 1
-  for (const item of newItems) {
-    pantry.items.push({ ...item, id: nextId++, status: 'in_stock', statusChangedAt: null })
+export type NewItem = Omit<PantryItem, 'id' | 'status' | 'statusChangedAt'>
+
+/**
+  Saves confirmed items from a receipt scan (step 1: "Save to pantry").
+  With backend: POST /api/v1/Items, then reload. Demo mode: add locally.
+  Returns an error message or null.
+*/
+export async function addItems(newItems: NewItem[], referenceDate: string, referenceDateSource: string): Promise<string | null> {
+  if (!apiConfigured) {
+    let nextId = Math.max(0, ...pantry.items.map((i) => i.id)) + 1
+    for (const item of newItems) pantry.items.push({ ...item, id: nextId++, status: 'in_stock', statusChangedAt: null })
+    return null
+  }
+  try {
+    const res = await apiFetch('/api/v1/Items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referenceDate,
+        referenceDateSource,
+        items: newItems.map((i) => ({ ...i, storageNote: null, estimationNote: null })),
+      }),
+    })
+    if (!res.ok) return res.status === 401 ? 'Your login has expired. Please sign in again.' : 'Saving failed. Please try again.'
+    await loadItems()
+    return null
+  } catch {
+    return 'No connection to the server.'
   }
 }
 

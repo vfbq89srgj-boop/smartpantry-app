@@ -9,6 +9,8 @@ import { Camera, ChevronRight, ClipboardList, CookingPot, ScanText } from '@luci
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import { bySoonestExpiry, inStock, pantry } from '../data/pantry'
+import { session, signOut } from '../data/auth'
+import { apiConfigured } from '../api/client'
 
 const router = useRouter()
 
@@ -51,7 +53,10 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
         <h2>Use these first</h2>
         <RouterLink to="/pantry" class="link">View pantry</RouterLink>
       </div>
-      <div class="card list">
+      <p v-if="pantry.error" class="note error">{{ pantry.error }}</p>
+      <p v-else-if="pantry.loading" class="note">Loading your pantry…</p>
+      <p v-else-if="!useFirst.length" class="note">Your pantry is empty – scan your first receipt.</p>
+      <div v-else class="card list">
         <ItemRow v-for="item in useFirst" :key="item.id" :item="item" />
       </div>
     </section>
@@ -70,6 +75,11 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
       <CookingPot :size="20" :stroke-width="1.75" />
       Recipe ideas
     </button>
+
+    <p class="account">
+      <template v-if="session">Signed in as {{ session.user.email }} · <button @click="signOut">Sign out</button></template>
+      <template v-else-if="!apiConfigured">Demo mode – sample data</template>
+    </p>
   </main>
 </template>
 
@@ -150,5 +160,9 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
 .shortcut-title { font-size: 13px; font-weight: 600; }
 .shortcut-sub { font-size: 11px; color: var(--color-text-muted); }
 
-.btn-primary { margin-bottom: 8px; }
+.note { padding: 18px; border-radius: var(--radius-lg); background: var(--color-surface); font-size: 14px; color: var(--color-text-muted); }
+.note.error { color: var(--fresh-red-text); }
+
+.account { margin: 4px 0 8px; text-align: center; font-size: 12px; color: var(--color-text-muted); }
+.account button { color: var(--color-primary); font-weight: 600; font-size: 12px; }
 </style>

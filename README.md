@@ -21,8 +21,15 @@ Requirement: Node.js 20 or newer.
 
 ```
 npm install
+cp .env.example .env     (then fill in the values)
 npm run dev
 ```
+
+Without `.env` the app runs in **demo mode**: no login, sample data, fake receipt scan.
+With the Supabase values you get the login; with `VITE_API_URL` it uses Benny's backend.
+Locally the backend runs on `http://localhost:5286` (`dotnet run` in Smart-Pantry) and
+already allows `http://localhost:5173` (CORS). For the iOS app, the backend's `Cors:Origins`
+must also contain `capacitor://localhost`.
 
 Open the address shown in the terminal (e.g. http://localhost:5173).
 Tip: in the browser press F12 → device toolbar → choose an iPhone to see the phone size.
@@ -49,7 +56,7 @@ src/
 - [x] Pantry screen with traffic light and "Eaten / Thrown away" (local only – needs PATCH endpoint)
 - [ ] Shopping list
 - [ ] Impact statistics
-- [ ] Login + backend connection (`GET/POST /api/v1/Items`)
+- [x] Login (Supabase) + backend connection (`GET/POST /api/v1/Items`) – still to be tested against the running backend
 - [x] Receipt scan → review list → save (demo mode until login is connected; `POST /api/v1/Receipts`)
 - [ ] Recipe ideas (`POST /api/v1/Recipes/findByIngredients`)
 - [ ] Capacitor iOS build + TestFlight

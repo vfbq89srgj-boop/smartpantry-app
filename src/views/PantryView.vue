@@ -13,7 +13,7 @@ import { Camera, Check, Trash } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import UndoToast from '../components/UndoToast.vue'
-import { bySoonestExpiry, daysLeft, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
+import { pantry, bySoonestExpiry, daysLeft, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
 
 const router = useRouter()
 
@@ -75,8 +75,11 @@ function undo() {
       </button>
     </div>
 
+    <p v-if="pantry.loading && !pantry.items.length" class="card note">Loading your pantry…</p>
+    <p v-else-if="pantry.error" class="card note error">{{ pantry.error }}</p>
+
     <!-- Item cards -->
-    <TransitionGroup v-if="visibleItems.length" name="list" tag="div" class="list">
+    <TransitionGroup v-else-if="visibleItems.length" name="list" tag="div" class="list">
       <article v-for="item in visibleItems" :key="item.id" class="card item">
         <ItemRow :item="item" />
         <p v-if="item.expirationDateEstimated" class="estimated">Expiry date estimated by AI</p>
@@ -158,6 +161,9 @@ function undo() {
 /* Expired item: make the decision obvious */
 .urgent .eaten { background: var(--color-primary); color: var(--color-on-primary); }
 .urgent .thrown { background: var(--fresh-red-bg); color: var(--fresh-red-text); }
+
+.note { padding: 18px; font-size: 14px; color: var(--color-text-muted); }
+.note.error { color: var(--fresh-red-text); }
 
 /* Empty state */
 .empty { display: flex; flex-direction: column; gap: 8px; padding: 28px 22px; text-align: center; }

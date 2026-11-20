@@ -2,10 +2,11 @@
   Receipt scan – talks to Benny's backend: POST /api/v1/Receipts (multipart, field "image").
   Response = FileAnalysisDto (see Smart-Pantry/items/FileAnalysisDto.cs).
 
-  DEMO MODE: if VITE_API_URL is not set (or no login yet), we return a fake analysis
+  DEMO MODE: if VITE_API_URL is not set, we return a fake analysis
   after a short delay, so the screens can be tested without the backend.
 */
 import type { StoragePlace } from '../data/pantry'
+import { apiConfigured, apiFetch } from './client'
 
 /** One item as the AI returns it (FoodItemDto) */
 export interface ScannedItem {
@@ -30,21 +31,15 @@ export interface ReceiptAnalysis {
 /** Error with a message we can show to the user (MVP step 1: error handling) */
 export class ScanError extends Error {}
 
-const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
-
-export async function analyzeReceipt(image: Blob, token?: string): Promise<ReceiptAnalysis> {
-  if (!API_URL || !token) return demoAnalysis()
+export async function analyzeReceipt(image: Blob): Promise<ReceiptAnalysis> {
+  if (!apiConfigured) return demoAnalysis()
 
   const form = new FormData()
   form.append('image', image, 'receipt.jpg')
 
   let res: Response
   try {
-    res = await fetch(`${API_URL}/api/v1/Receipts`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    })
+    res = await apiFetch('/api/v1/Receipts', { method: 'POST', body: form })
   } catch {
     throw new ScanError('No connection to the server. Check your internet and try again.')
   }

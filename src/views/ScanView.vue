@@ -21,6 +21,9 @@ type Step = 'start' | 'analyzing' | 'review' | 'error'
 const step = ref<Step>('start')
 const errorMessage = ref('')
 const items = ref<ScannedItem[]>([])
+const reference = ref({ date: new Date().toISOString().slice(0, 10), source: 'currentDate' })
+const saving = ref(false)
+const saveError = ref('')
 
 // Two hidden file inputs: one opens the camera, one the photo library
 const cameraInput = ref<HTMLInputElement>()
@@ -35,8 +38,9 @@ async function onFileChosen(event: Event) {
   step.value = 'analyzing'
   try {
     const image = await resizeImage(file)
-    const analysis = await analyzeReceipt(image) // TODO login: pass the Supabase token here
+    const analysis = await analyzeReceipt(image)
     items.value = analysis.items
+    reference.value = { date: analysis.referenceDate, source: analysis.referenceDateSource }
     step.value = 'review'
   } catch (e) {
     errorMessage.value = e instanceof ScanError ? e.message : 'Something went wrong. Please try again.'
@@ -61,9 +65,10 @@ const openIssues = computed(
   () => items.value.filter((i) => !i.name.trim() || i.name === 'Unreadable item' || !i.suggestedStoragePlace).length,
 )
 
-function confirm() {
-  // TODO backend: POST /api/v1/Items with { referenceDate, referenceDateSource, items }
-  addItems(
+async function confirm() {
+  saving.value = true
+  saveError.value = ''
+  const error = await addItems(
     items.value.map((i) => ({
       name: i.name.trim(),
       quantity: i.quantity,
@@ -72,8 +77,12 @@ function confirm() {
       expirationDate: i.expirationDate,
       expirationDateEstimated: i.expirationDateEstimated,
     })),
+    reference.value.date,
+    reference.value.source,
   )
-  router.push('/pantry')
+  saving.value = false
+  if (error) saveError.value = error
+  else router.push('/pantry')
 }
 </script>
 
@@ -135,9 +144,10 @@ function confirm() {
 
   <!-- Confirm button sits above the tab bar -->
   <div v-if="step === 'review'" class="confirm-bar">
+    <p v-if="saveError" class="issues">{{ saveError }}</p>
     <p v-if="openIssues" class="issues">{{ openIssues }} item{{ openIssues > 1 ? 's' : '' }} still need{{ openIssues > 1 ? '' : 's' }} a name or storage place</p>
-    <button class="btn-primary" :disabled="openIssues > 0 || !items.length" @click="confirm">
-      Add {{ items.length }} items to pantry
+    <button class="btn-primary" :disabled="openIssues > 0 || !items.length || saving" @click="confirm">
+      {{ saving ? 'Saving…' : `Add ${items.length} items to pantry` }}
     </button>
   </div>
 </template>
