@@ -71,6 +71,14 @@ export function setStatus(id: number, status: ItemStatus) {
   item.statusChangedAt = status === 'in_stock' ? null : new Date().toISOString()
 }
 
+/** Adds confirmed items from a receipt scan (step 1: "Save to pantry") */
+export function addItems(newItems: Omit<PantryItem, 'id' | 'status' | 'statusChangedAt'>[]) {
+  let nextId = Math.max(0, ...pantry.items.map((i) => i.id)) + 1
+  for (const item of newItems) {
+    pantry.items.push({ ...item, id: nextId++, status: 'in_stock', statusChangedAt: null })
+  }
+}
+
 /** Whole days from today until the date (negative = already expired) */
 export function daysLeft(date: string | null): number | null {
   if (!date) return null

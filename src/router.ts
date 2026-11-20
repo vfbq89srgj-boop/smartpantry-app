@@ -5,6 +5,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from './views/HomeView.vue'
 import PantryView from './views/PantryView.vue'
+import ScanView from './views/ScanView.vue'
 import ComingSoon from './components/ComingSoon.vue'
 
 export const router = createRouter({
@@ -15,7 +16,7 @@ export const router = createRouter({
     { path: '/pantry', component: PantryView },
     { path: '/shopping-list', component: ComingSoon, props: { title: 'Shopping list', text: 'Add, check off and swipe away items. Coming soon.' } },
     { path: '/impact', component: ComingSoon, props: { title: 'Impact', text: 'How much food you rescued instead of wasting. Coming soon.' } },
-    { path: '/scan', component: ComingSoon, props: { title: 'Scan receipt', text: 'Take a photo of your receipt – the AI does the rest. Coming soon.' } },
+    { path: '/scan', component: ScanView },
     { path: '/recipes', component: ComingSoon, props: { title: 'Recipe ideas', text: 'Recipes that use what expires first. Coming soon.' } },
   ],
   scrollBehavior: () => ({ top: 0 }),

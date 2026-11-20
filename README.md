@@ -46,10 +46,10 @@ src/
 
 - [x] App frame, tab bar (Home, Pantry, Shopping list, Impact)
 - [x] Home screen (sample data)
-- [ ] Pantry screen with traffic light and "Eaten / Thrown away"
+- [x] Pantry screen with traffic light and "Eaten / Thrown away" (local only – needs PATCH endpoint)
 - [ ] Shopping list
 - [ ] Impact statistics
 - [ ] Login + backend connection (`GET/POST /api/v1/Items`)
-- [ ] Receipt scan → review list → save (`POST /api/v1/Receipts`)
+- [x] Receipt scan → review list → save (demo mode until login is connected; `POST /api/v1/Receipts`)
 - [ ] Recipe ideas (`POST /api/v1/Recipes/findByIngredients`)
 - [ ] Capacitor iOS build + TestFlight
