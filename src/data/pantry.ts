@@ -19,6 +19,7 @@ export interface PantryItem {
   expirationDate: string | null  // "YYYY-MM-DD"
   expirationDateEstimated: boolean
   status: ItemStatus             // step 5 – not in the backend yet
+  statusChangedAt: string | null // when it was marked eaten / thrown away
 }
 
 /** Date string "YYYY-MM-DD" that is `days` away from today */
@@ -29,19 +30,19 @@ function inDays(days: number): string {
 }
 
 const sampleItems: PantryItem[] = [
-  { id: 1, name: 'Milk', quantity: 1, category: 'fresh_milk', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(0), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 2, name: 'Baby spinach', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(2), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 3, name: 'Minced beef', quantity: 1, category: 'minced_meat', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(1), expirationDateEstimated: false, status: 'in_stock' },
-  { id: 4, name: 'Greek yogurt', quantity: 2, category: 'dairy', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(3), expirationDateEstimated: false, status: 'in_stock' },
-  { id: 5, name: 'Tomatoes', quantity: 6, category: 'vegetables', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(5), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 6, name: 'Eggs', quantity: 10, category: 'eggs', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(18), expirationDateEstimated: false, status: 'in_stock' },
-  { id: 7, name: 'Wholegrain bread', quantity: 1, category: 'bakery', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-1), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 8, name: 'Pasta', quantity: 2, category: 'dry_goods', suggestedStoragePlace: 'Pantry', expirationDate: inDays(320), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 9, name: 'Frozen peas', quantity: 1, category: 'frozen', suggestedStoragePlace: 'Freezer', expirationDate: inDays(180), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 10, name: 'Apples', quantity: 4, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(9), expirationDateEstimated: true, status: 'in_stock' },
-  { id: 11, name: 'Oat drink', quantity: 1, category: 'plant_based', suggestedStoragePlace: 'Pantry', expirationDate: null, expirationDateEstimated: false, status: 'in_stock' },
-  { id: 12, name: 'Bananas', quantity: 3, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-2), expirationDateEstimated: true, status: 'eaten' },
-  { id: 13, name: 'Lettuce', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(-3), expirationDateEstimated: true, status: 'thrown_away' },
+  { id: 1, name: 'Milk', quantity: 1, category: 'fresh_milk', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(0), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 2, name: 'Baby spinach', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(2), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 3, name: 'Minced beef', quantity: 1, category: 'minced_meat', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(1), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
+  { id: 4, name: 'Greek yogurt', quantity: 2, category: 'dairy', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(3), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
+  { id: 5, name: 'Tomatoes', quantity: 6, category: 'vegetables', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(5), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 6, name: 'Eggs', quantity: 10, category: 'eggs', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(18), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
+  { id: 7, name: 'Wholegrain bread', quantity: 1, category: 'bakery', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-1), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 8, name: 'Pasta', quantity: 2, category: 'dry_goods', suggestedStoragePlace: 'Pantry', expirationDate: inDays(320), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 9, name: 'Frozen peas', quantity: 1, category: 'frozen', suggestedStoragePlace: 'Freezer', expirationDate: inDays(180), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 10, name: 'Apples', quantity: 4, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(9), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 11, name: 'Oat drink', quantity: 1, category: 'plant_based', suggestedStoragePlace: 'Pantry', expirationDate: null, expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
+  { id: 12, name: 'Bananas', quantity: 3, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-2), expirationDateEstimated: true, status: 'eaten', statusChangedAt: inDays(-1) },
+  { id: 13, name: 'Lettuce', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(-3), expirationDateEstimated: true, status: 'thrown_away', statusChangedAt: inDays(-1) },
 ]
 
 /** The shared state – every screen reads from here */
@@ -57,6 +58,18 @@ export const inStock = computed(() => pantry.items.filter((i) => i.status === 'i
 export const bySoonestExpiry = computed(() =>
   [...inStock.value].sort((a, b) => (a.expirationDate ?? '9999').localeCompare(b.expirationDate ?? '9999')),
 )
+
+/**
+  Step 5 of our plan: mark an item as eaten or thrown away (or back to in stock for "Undo").
+  Nothing is deleted – the Impact screen counts these later.
+  TODO backend: PATCH /pantry/items/{id} once Benny adds it.
+*/
+export function setStatus(id: number, status: ItemStatus) {
+  const item = pantry.items.find((i) => i.id === id)
+  if (!item) return
+  item.status = status
+  item.statusChangedAt = status === 'in_stock' ? null : new Date().toISOString()
+}
 
 /** Whole days from today until the date (negative = already expired) */
 export function daysLeft(date: string | null): number | null {
