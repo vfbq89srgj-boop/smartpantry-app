@@ -9,7 +9,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Camera, Check, Trash } from '@lucide/vue'
+import { Camera, Check, ShoppingCart, Trash } from '@lucide/vue'
+import { addToList, isOnList } from '../data/shoppingList'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import UndoToast from '../components/UndoToast.vue'
@@ -90,6 +91,15 @@ function undo() {
           <button class="action thrown" @click="mark(item, 'thrown_away')">
             <Trash :size="16" :stroke-width="2" /> Thrown away
           </button>
+          <!-- Step 3: "Add to list" – buy it again -->
+          <button
+            class="action cart"
+            :class="{ added: isOnList(item.name) }"
+            :aria-label="isOnList(item.name) ? 'On your shopping list' : 'Add to shopping list'"
+            @click="addToList(item.name, 'pantry')"
+          >
+            <component :is="isOnList(item.name) ? Check : ShoppingCart" :size="16" :stroke-width="2" />
+          </button>
         </div>
       </article>
     </TransitionGroup>
@@ -156,6 +166,8 @@ function undo() {
 }
 .eaten { background: var(--color-tile); color: var(--color-primary); }
 .thrown { background: var(--color-surface-soft); color: var(--color-text-muted); }
+.cart { flex: 0 0 44px; background: var(--color-surface-soft); color: var(--color-text-muted); }
+.cart.added { background: var(--color-tile); color: var(--color-primary); }
 .action:active { opacity: 0.8; }
 
 /* Expired item: make the decision obvious */

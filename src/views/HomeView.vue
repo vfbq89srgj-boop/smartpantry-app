@@ -10,6 +10,7 @@ import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import { bySoonestExpiry, inStock, pantry } from '../data/pantry'
 import { session, signOut } from '../data/auth'
+import { openEntries } from '../data/shoppingList'
 import { apiConfigured } from '../api/client'
 
 const router = useRouter()
@@ -42,7 +43,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
         <p class="stat-sub">All in one place</p>
       </RouterLink>
       <RouterLink to="/shopping-list" class="stat">
-        <p class="stat-main"><strong>{{ pantry.shoppingListCount }}</strong> On the list</p>
+        <p class="stat-main"><strong>{{ openEntries.length }}</strong> On the list</p>
         <p class="stat-sub">Ready for the next shop</p>
       </RouterLink>
     </section>

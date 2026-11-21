@@ -52,7 +52,6 @@ export const pantry = reactive({
   items: apiConfigured ? ([] as PantryItem[]) : sampleItems,
   loading: false,
   error: '',
-  shoppingListCount: 5,
 })
 
 // ---------------------------------------------------------------------------
