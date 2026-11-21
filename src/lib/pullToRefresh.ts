@@ -19,7 +19,18 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
   function move(e: TouchEvent) {
     if (!active) return
     const dy = e.touches[0].clientY - startY
-    pull.value = dy > 0 ? Math.min(dy * 0.5, threshold * 1.5) : 0
+    // The page is scrolling normally (finger went up, or page is no longer at the top):
+    // stop tracking for the rest of this gesture, otherwise the indicator pushes the
+    // content around while you scroll – that felt jerky.
+    if (dy < 0 || window.scrollY > 0) {
+      active = false
+      pull.value = 0
+      return
+    }
+    pull.value = Math.min(dy * 0.5, threshold * 1.5)
+    // Only while pulling down at the very top: stop the browser's own pull-to-reload (Android).
+    // Normal scrolling is never touched, so it keeps its natural feel.
+    if (e.cancelable) e.preventDefault()
   }
 
   async function end() {
@@ -39,7 +50,7 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
 
   onMounted(() => {
     window.addEventListener('touchstart', start, { passive: true })
-    window.addEventListener('touchmove', move, { passive: true })
+    window.addEventListener('touchmove', move, { passive: false }) // needed for preventDefault above
     window.addEventListener('touchend', end)
     window.addEventListener('touchcancel', end)
   })

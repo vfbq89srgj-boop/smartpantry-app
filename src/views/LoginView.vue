@@ -66,7 +66,10 @@ async function submit() {
     <Transition name="fade">
       <div v-if="welcome" class="welcome" role="status">
         <p class="welcome-text">
-          {{ displayName ? `Hi, ${displayName}!` : "Welcome to PantryX" }}
+          <template v-if="displayName"
+            >Hi, {{ displayName }}<span class="bang">!</span></template
+          >
+          <template v-else>Welcome to PantryX</template>
         </p>
         <img :src="symbol" alt="" class="welcome-logo" />
       </div>
@@ -155,10 +158,17 @@ input:focus {
   background: var(--color-tile);
 }
 .welcome-text {
-  font-size: 28px;
-  font-weight: 500;
-  color: var(--color-primary);
+  /* Same rounded, heavy look as the logo lettering (Nunito ExtraBold; falls back to Inter until it is installed) */
+  font-family: "Nunito Variable", var(--font);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-brand);
   animation: rise 1s ease-out both;
+}
+/* The "!" in the green of the logo's "x" */
+.bang {
+  color: var(--color-brand-green);
 }
 .welcome-logo {
   width: 130px;

@@ -10,7 +10,8 @@
   --color-tile: #eaf0e0;        /* sage stat tiles, active tab */
   --color-accent: #ddebcb;      /* light green button on dark green */
   --color-brand: #1e4d3a;       /* logo dark green (splash, logo background) */
-  --color-primary: #1e4d3a;     /* main green: buttons, links – same as the logo */
+  --color-brand-green: #4caf6e; /* logo light green (the "x") */
+  --color-primary: #1e4d3a;    /* main green: buttons, links – same as the logo */
   --color-text: #173a2c;        /* dark green text */
   --color-text-muted: #67776c;  /* grey-green secondary text */
   --color-on-primary: #ffffff;
