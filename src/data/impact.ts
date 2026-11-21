@@ -8,7 +8,8 @@
   Weight / price come from the receipt when available, otherwise from the category defaults.
 */
 import { reactive } from 'vue'
-import { fetchStats, type Stats, type StatsItem } from '../api/stats'
+import { fetchStats, type DateRange, type Stats, type StatsItem } from '../api/stats'
+import { localDateString } from '../lib/date'
 import { AVG_WASTE_KG_PER_PERSON_WEEK, CAR_KG_CO2_PER_KM, factorFor } from './impactFactors'
 
 const HOUSEHOLD_KEY = 'pantrix.householdSize'
@@ -24,6 +25,7 @@ function savedHousehold(): number {
 
 export const impactState = reactive({
   days: 30,
+  custom: null as DateRange | null, // set when "Custom" is chosen
   householdSize: savedHousehold(),
   stats: null as Stats | null,
   loading: false,
@@ -43,7 +45,9 @@ export async function loadImpact() {
   impactState.loading = true
   impactState.error = ''
   try {
-    impactState.stats = await fetchStats(impactState.days)
+    impactState.stats = impactState.custom
+      ? await fetchStats(daysBetween(impactState.custom.from, localDateString()), impactState.custom)
+      : await fetchStats(impactState.days)
   } catch (e) {
     impactState.error = e instanceof Error ? e.message : 'Something went wrong.'
   } finally {
@@ -51,8 +55,18 @@ export async function loadImpact() {
   }
 }
 
+/** Days from `from` to `to`, both included */
+export function daysBetween(from: string, to: string): number {
+  return Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86_400_000) + 1)
+}
+
+/** Length of the selected period in days (for the per-week comparison) */
+export function periodDays(): number {
+  return impactState.custom ? daysBetween(impactState.custom.from, impactState.custom.to) : impactState.days
+}
+
 const weightOf = (i: StatsItem) => i.weightKg ?? factorFor(i.category).weightKg
-const priceOf = (i: StatsItem) => i.unitPrice ?? factorFor(i.category).priceEur
+const priceOf = (i: StatsItem) => i.price ?? factorFor(i.category).priceEur
 
 export function calculateImpact(stats: Stats, days: number, householdSize: number) {
   const eaten = stats.summary.itemsEaten

@@ -5,16 +5,18 @@
   Plus: "These items have expired – eaten or thrown away?" to keep the numbers honest.
 -->
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Car, Check, Euro, Minus, Plus, Trash, Trophy, Users, Weight } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
-import { calculateImpact, impactState, loadImpact, setHouseholdSize } from '../data/impact'
+import { calculateImpact, impactState, loadImpact, periodDays, setHouseholdSize } from '../data/impact'
+import { inDays, localDateString } from '../lib/date'
 import { FACTORS_VERSION } from '../data/impactFactors'
 import { categoryOf } from '../data/categories'
 import { setStatus, type ItemStatus } from '../data/pantry'
 import { ALL_TIME_DAYS } from '../api/stats'
 
 const periods = [
+  { days: 7, label: 'Last 7 days' },
   { days: 30, label: 'Last 30 days' },
   { days: 365, label: 'Last year' },
   { days: ALL_TIME_DAYS, label: 'All time' },
@@ -23,13 +25,32 @@ const periods = [
 onMounted(loadImpact)
 
 const impact = computed(() =>
-  impactState.stats ? calculateImpact(impactState.stats, impactState.days, impactState.householdSize) : null,
+  impactState.stats
+    ? calculateImpact(impactState.stats, impactState.stats.fallbackDays ?? periodDays(), impactState.householdSize)
+    : null,
 )
 
 function changePeriod(days: number) {
   impactState.days = days
+  impactState.custom = null
+  showCustom.value = false
   loadImpact()
 }
+
+// ----- Custom period -----
+const showCustom = ref(!!impactState.custom)
+const customFrom = ref(impactState.custom?.from ?? inDays(-13))
+const customTo = ref(impactState.custom?.to ?? localDateString())
+const today = localDateString()
+const customValid = computed(() => !!customFrom.value && !!customTo.value && customFrom.value <= customTo.value && customTo.value <= today)
+
+function applyCustom() {
+  if (!customValid.value) return
+  impactState.custom = { from: customFrom.value, to: customTo.value }
+  loadImpact()
+}
+
+const fmtDate = (d: string) => d.split('-').reverse().join('.')
 
 // Numbers are estimates → round them, never fake precision
 // Always 2 decimals, Austrian style: 1,25
@@ -67,15 +88,28 @@ async function resolve(id: number, status: ItemStatus) {
 
   <main class="page">
     <div class="chips" role="group" aria-label="Period">
-      <button v-for="p in periods" :key="p.days" class="chip" :class="{ active: impactState.days === p.days }" @click="changePeriod(p.days)">
+      <button v-for="p in periods" :key="p.days" class="chip" :class="{ active: !impactState.custom && !showCustom && impactState.days === p.days }" @click="changePeriod(p.days)">
         {{ p.label }}
       </button>
+      <button class="chip" :class="{ active: showCustom || impactState.custom }" @click="showCustom = true">
+        {{ impactState.custom ? `${fmtDate(impactState.custom.from)} – ${fmtDate(impactState.custom.to)}` : 'Custom' }}
+      </button>
     </div>
+
+    <!-- Custom period -->
+    <form v-if="showCustom" class="card custom" @submit.prevent="applyCustom">
+      <label>From <input v-model="customFrom" type="date" :max="today" /></label>
+      <label>To <input v-model="customTo" type="date" :max="today" /></label>
+      <button class="apply" type="submit" :disabled="!customValid">Show</button>
+    </form>
 
     <p v-if="impactState.loading && !impact" class="card note">Calculating your impact…</p>
     <p v-else-if="impactState.error" class="card note error">{{ impactState.error }}</p>
 
     <template v-else-if="impact">
+      <p v-if="impactState.stats?.fallbackDays" class="fallback">
+        This period is not available yet – showing the last {{ impactState.stats.fallbackDays }} days.
+      </p>
       <!-- 1. Usage rate (measured) -->
       <section class="card hero">
         <svg viewBox="0 0 128 128" class="ring" aria-hidden="true">
@@ -193,7 +227,14 @@ h2 { font-size: 16px; font-weight: 600; }
 .note { padding: 18px; font-size: 14px; color: var(--color-text-muted); }
 .note.error { color: var(--fresh-red-text); }
 
-.chips { display: flex; gap: 8px; margin-top: -8px; }
+.fallback { padding: 10px 14px; border-radius: var(--radius-md); background: var(--fresh-amber-bg); color: var(--fresh-amber-text); font-size: 13px; font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -8px; }
+.custom { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 10px; padding: 12px 14px; }
+.custom label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
+.custom input { height: 40px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 15px; -webkit-appearance: none; appearance: none; }
+.apply { height: 40px; padding: 0 16px; border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-on-primary); font-size: 14px; font-weight: 600; }
+.apply:disabled { opacity: 0.45; }
+@media (max-width: 380px) { .custom { grid-template-columns: 1fr 1fr; } .apply { grid-column: 1 / -1; } }
 .chip { padding: 7px 14px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text-muted); font-size: 13px; font-weight: 500; }
 .chip.active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary); }
 

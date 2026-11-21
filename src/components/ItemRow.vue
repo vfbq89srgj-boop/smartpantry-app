@@ -1,26 +1,38 @@
 <!-- One food item in a list: icon tile, name, "2× · Fridge", expiry badge -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import { remainingOf, storageLabel, type PantryItem } from '../data/pantry'
-import { categoryOf } from '../data/categories'
-import ExpiryBadge from './ExpiryBadge.vue'
+import { computed } from "vue";
+import {
+  remainingOf,
+  storageLabel,
+  type PantryItem,
+} from "../data/pantry";
+import { categoryOf } from "../data/categories";
+import ExpiryBadge from "./ExpiryBadge.vue";
 
-const props = defineProps<{ item: PantryItem }>()
+const props = defineProps<{ item: PantryItem }>();
 
-const category = computed(() => categoryOf(props.item.category))
+const category = computed(() => categoryOf(props.item.category));
 const details = computed(() => {
-  const total = props.item.quantity ?? 0
-  const left = remainingOf(props.item)
+  const total = props.item.quantity ?? 0;
+  const left = remainingOf(props.item);
   // partially used: "4 of 6 left", otherwise "2×"
-  const qty = total && left < total ? `${left} of ${total} left · ` : total ? `${total}× · ` : ''
-  return qty + storageLabel[props.item.suggestedStoragePlace]
-})
+  const qty =
+    total && left < total
+      ? `${left} of ${total} left · `
+      : total
+        ? `${total}× · `
+        : "";
+  return qty + storageLabel[props.item.suggestedStoragePlace];
+});
 </script>
 
 <template>
   <div class="row">
     <div class="icon-tile">
-      <component :is="category.icon" :size="22" :stroke-width="1.75" />
+      <component
+        :is="category.icon"
+        :size="22"
+        :stroke-width="1.75" />
     </div>
     <div class="text">
       <p class="name">{{ item.name }}</p>
@@ -47,7 +59,10 @@ const details = computed(() => {
   background: var(--color-surface-soft);
   color: var(--color-primary);
 }
-.text { flex: 1; min-width: 0; }
+.text {
+  flex: 1;
+  min-width: 0;
+}
 .name {
   font-size: 15px;
   font-weight: 600;
@@ -55,5 +70,9 @@ const details = computed(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.details { margin-top: 2px; font-size: 12px; color: var(--color-text-muted); }
+.details {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
 </style>
