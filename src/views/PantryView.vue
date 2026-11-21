@@ -103,6 +103,10 @@ function undo() {
     <PullIndicator :pull="pull" :refreshing="refreshing" />
     <!-- Filter chips (scroll sideways on small phones) -->
     <div class="chips">
+      <!-- Add an item by hand (no receipt) – POST /Items with referenceDateSource "manual" -->
+      <button class="chip add-chip" @click="router.push('/pantry/new')">
+        <Plus :size="14" :stroke-width="2.5" /> Add item
+      </button>
       <button
         v-for="f in filters"
         :key="f.value"
@@ -164,6 +168,7 @@ function undo() {
       <button class="btn-primary" @click="router.push('/scan')">
         <Camera :size="20" :stroke-width="1.75" /> Scan receipt
       </button>
+      <button class="add-manual" @click="router.push('/pantry/new')">or add an item by hand</button>
     </div>
   </main>
 
@@ -174,6 +179,10 @@ function undo() {
 
 <style scoped>
 .page { padding: 0 var(--page-padding); }
+
+/* "Add item" chip at the end of the filter row */
+.chip.add-chip { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+.add-manual { margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--color-primary); }
 
 /* Filter chips */
 .chips {

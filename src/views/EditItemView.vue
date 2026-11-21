@@ -1,5 +1,6 @@
 <!--
-  Edit a saved item (PUT /api/v1/Items/{id}).
+  Add an item by hand (/pantry/new → POST /api/v1/Items, source "manual")
+  or edit a saved item (/pantry/:id/edit → PUT /api/v1/Items/{id}).
   Name, quantity, category, storage place, best-before date, total weight and total price.
   Eaten / thrown-away amounts stay as they are – quantity can't go below them.
 -->
@@ -8,16 +9,18 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ChevronLeft, Minus, Plus } from '@lucide/vue'
 import { categories, categoryOf } from '../data/categories'
-import { pantry, storageLabel, updateItem, usedOf, type StoragePlace } from '../data/pantry'
+import { addItems, pantry, storageLabel, updateItem, usedOf, type StoragePlace } from '../data/pantry'
+import { localDateString } from '../lib/date'
 
 const route = useRoute()
 const router = useRouter()
 
+const isNew = route.path === '/pantry/new'
 const item = computed(() => pantry.items.find((i) => i.id === Number(route.params.id)))
 const places: StoragePlace[] = ['Refrigerator', 'Freezer', 'Pantry']
 
 // Local copy of the fields – saved only when the user taps "Save"
-const original = item.value
+const original = isNew ? undefined : item.value
 const name = ref(original?.name ?? '')
 const quantity = ref(original?.quantity ?? 1)
 const category = ref(original?.category ?? 'other')
@@ -53,10 +56,10 @@ const saving = ref(false)
 const saveError = ref('')
 
 async function save() {
-  if (!original || errors.value.length) return
+  if ((!isNew && !original) || errors.value.length) return
   saving.value = true
   saveError.value = ''
-  const error = await updateItem(original.id, {
+  const fields = {
     name: name.value.trim(),
     quantity: quantity.value,
     category: category.value,
@@ -65,7 +68,10 @@ async function save() {
     expirationDateEstimated: estimated.value,
     weightKg: toNumber(weightText.value),
     price: toNumber(priceText.value),
-  })
+  }
+  const error = isNew
+    ? await addItems([fields], localDateString(), 'manual') // no receipt → no fileHash
+    : await updateItem(original!.id, fields)
   saving.value = false
   if (error) saveError.value = error
   else router.back()
@@ -80,14 +86,14 @@ function onDateChange() {
 <template>
   <header class="bar">
     <button class="back" aria-label="Back" @click="router.back()"><ChevronLeft :size="24" /></button>
-    <h1>Edit item</h1>
+    <h1>{{ isNew ? 'Add item' : 'Edit item' }}</h1>
   </header>
 
-  <main v-if="item" class="page">
+  <main v-if="isNew || item" class="page">
     <section class="card form">
       <div class="top">
         <div class="icon-tile"><component :is="icon" :size="22" :stroke-width="1.75" /></div>
-        <input v-model="name" class="name" aria-label="Item name" placeholder="Item name" />
+        <input v-model="name" class="name" aria-label="Item name" placeholder="e.g. Apples" :autofocus="isNew" />
       </div>
 
       <div class="fields">
@@ -140,7 +146,7 @@ function onDateChange() {
     <p v-if="saveError" class="error">{{ saveError }}</p>
 
     <button class="btn-primary" :disabled="saving || errors.length > 0" @click="save">
-      {{ saving ? 'Saving…' : 'Save changes' }}
+      {{ saving ? 'Saving…' : isNew ? 'Add to pantry' : 'Save changes' }}
     </button>
   </main>
 
