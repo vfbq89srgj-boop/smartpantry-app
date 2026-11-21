@@ -19,7 +19,7 @@ export interface PantryItem {
   suggestedStoragePlace: StoragePlace
   expirationDate: string | null  // "YYYY-MM-DD"
   expirationDateEstimated: boolean
-  status: ItemStatus             // step 5 – not in the backend yet
+  status: ItemStatus             // step 5 – saved in the backend via PATCH /Items/{id}/status
   statusChangedAt: string | null // when it was marked eaten / thrown away
 }
 
@@ -58,42 +58,37 @@ export const pantry = reactive({
 // Backend: GET /api/v1/Items and POST /api/v1/Items (see Smart-Pantry/docs/API.md)
 // ---------------------------------------------------------------------------
 
-/** Eaten / thrown away is not in the backend yet, so we remember it on the phone */
-const STATUS_KEY = 'pantrix.statuses'
-function savedStatuses(): Record<number, { status: ItemStatus; at: string | null }> {
-  try {
-    return JSON.parse(localStorage.getItem(STATUS_KEY) ?? '{}')
-  } catch {
-    return {}
-  }
-}
-function rememberStatus(id: number, status: ItemStatus, at: string | null) {
-  try {
-    const all = savedStatuses()
-    if (status === 'in_stock') delete all[id]
-    else all[id] = { status, at }
-    localStorage.setItem(STATUS_KEY, JSON.stringify(all))
-  } catch {
-    // storage not available – the status is then only kept until the app closes
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** GET one page. The first database call after a login sometimes fails with 503 – retry a few times. */
+async function fetchPage(page: number) {
+  const attempts = 3
+  for (let attempt = 1; ; attempt++) {
+    let retryable = false
+    try {
+      const res = await apiFetch(`/api/v1/Items?page=${page}&pageSize=100`)
+      if (res.ok) return (await res.json()) as { items: Omit<PantryItem, 'status' | 'statusChangedAt'>[]; totalCount: number }
+      retryable = res.status === 503
+      if (!retryable || attempt === attempts) throw new Error(`HTTP ${res.status}`)
+    } catch (e) {
+      // a rejected fetch() (network error) is retried too; HTTP errors other than 503 are not
+      if (!(e instanceof TypeError)) throw e
+      if (attempt === attempts) throw e
+    }
+    await sleep(500 * attempt)
   }
 }
 
-/** Loads all of the user's items from the backend (all pages) */
+/** Loads all of the user's in-stock items from the backend (all pages) */
 export async function loadItems() {
   if (!apiConfigured) return
   pantry.loading = true
   pantry.error = ''
   try {
-    const statuses = savedStatuses()
     const all: PantryItem[] = []
     for (let page = 1; ; page++) {
-      const res = await apiFetch(`/api/v1/Items?page=${page}&pageSize=100`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { items: Omit<PantryItem, 'status' | 'statusChangedAt'>[]; totalCount: number }
-      for (const item of data.items) {
-        const saved = statuses[item.id]
-        all.push({ ...item, status: saved?.status ?? 'in_stock', statusChangedAt: saved?.at ?? null })
-      }
+      const data = await fetchPage(page)
+      for (const item of data.items) all.push({ ...item, status: 'in_stock', statusChangedAt: null })
       if (all.length >= data.totalCount || data.items.length === 0) break
     }
     pantry.items = all
@@ -112,17 +107,40 @@ export const bySoonestExpiry = computed(() =>
   [...inStock.value].sort((a, b) => (a.expirationDate ?? '9999').localeCompare(b.expirationDate ?? '9999')),
 )
 
+/** Our status names → the backend's ("thrown_away" is called "discarded" there) */
+const apiStatus: Record<ItemStatus, string> = { in_stock: 'in_stock', eaten: 'eaten', thrown_away: 'discarded' }
+
 /**
   Step 5 of our plan: mark an item as eaten or thrown away (or back to in stock for "Undo").
   Nothing is deleted – the Impact screen counts these later.
-  TODO backend: PATCH /pantry/items/{id} once Benny adds it.
+  Backend: PATCH /api/v1/Items/{id}/status. The screen updates immediately and
+  rolls back if the server refuses. Returns an error message or null.
 */
-export function setStatus(id: number, status: ItemStatus) {
+export async function setStatus(id: number, status: ItemStatus): Promise<string | null> {
   const item = pantry.items.find((i) => i.id === id)
-  if (!item) return
+  if (!item) return null
+  const before = { status: item.status, statusChangedAt: item.statusChangedAt }
   item.status = status
   item.statusChangedAt = status === 'in_stock' ? null : new Date().toISOString()
-  rememberStatus(id, status, item.statusChangedAt)
+  if (!apiConfigured) return null
+
+  try {
+    const res = await apiFetch(`/api/v1/Items/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: apiStatus[status] }),
+    })
+    if (res.ok) {
+      const data = (await res.json()) as { statusChangedAt: string | null }
+      item.statusChangedAt = data.statusChangedAt
+      return null
+    }
+    Object.assign(item, before)
+    return res.status === 401 ? 'Your login has expired. Please sign in again.' : 'Could not save the change. Please try again.'
+  } catch {
+    Object.assign(item, before)
+    return 'No connection to the server.'
+  }
 }
 
 export type NewItem = Omit<PantryItem, 'id' | 'status' | 'statusChangedAt'>

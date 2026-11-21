@@ -44,18 +44,27 @@ function isExpired(item: PantryItem) {
 const toast = ref<{ id: number; message: string } | null>(null)
 let toastTimer: number | undefined
 
-function mark(item: PantryItem, status: ItemStatus) {
-  setStatus(item.id, status)
+async function mark(item: PantryItem, status: ItemStatus) {
+  const failed = setStatus(item.id, status)
   const text = status === 'eaten' ? 'marked as eaten' : 'marked as thrown away'
   toast.value = { id: item.id, message: `${item.name} ${text}` }
   window.clearTimeout(toastTimer)
   toastTimer = window.setTimeout(() => (toast.value = null), 4000)
+  const error = await failed
+  if (error) {
+    toast.value = { id: -1, message: error }
+    window.clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => (toast.value = null), 4000)
+  }
 }
 
 function undo() {
-  if (!toast.value) return
-  setStatus(toast.value.id, 'in_stock')
+  if (!toast.value || toast.value.id < 0) return
+  const id = toast.value.id
   toast.value = null
+  setStatus(id, 'in_stock').then((error) => {
+    if (error) toast.value = { id: -1, message: error }
+  })
 }
 </script>
 
