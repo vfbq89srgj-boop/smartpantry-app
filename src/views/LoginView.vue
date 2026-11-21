@@ -10,6 +10,7 @@ const email = ref("");
 const password = ref("");
 const error = ref("");
 const busy = ref(false);
+const welcome = ref(false);
 
 async function submit() {
   busy.value = true;
@@ -23,6 +24,9 @@ async function submit() {
         : message;
     return;
   }
+
+  welcome.value = true;
+  await new Promise((r) => setTimeout(r, 1800));
   router.replace("/");
 }
 </script>
@@ -58,6 +62,15 @@ async function submit() {
         {{ busy ? "Signing in…" : "Sign in" }}
       </button>
     </form>
+
+    <Transition name="fade">
+      <div v-if="welcome" class="welcome" role="status">
+        <p class="welcome-text">Welcome to Pantrix</p>
+        <div class="welcome-logo">
+          <Leaf :size="60" :stroke-width="1.75" />
+        </div>
+      </div>
+    </Transition>
   </main>
 </template>
 
@@ -132,5 +145,67 @@ input:focus {
 }
 .btn-primary:disabled {
   opacity: 0.6;
+}
+
+/* Welcome overlay */
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: var(--color-tile);
+}
+.welcome-text {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--color-primary);
+  animation: rise 1s ease-out both;
+}
+.welcome-logo {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 30px;
+  background: var(--color-primary);
+  color: var(--color-accent);
+  animation: pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
+}
+.fade-enter-active {
+  transition: opacity 0.35s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-text,
+  .welcome-logo {
+    animation: none;
+  }
 }
 </style>
