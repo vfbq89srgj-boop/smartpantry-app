@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Camera, ChevronRight, ClipboardList, CookingPot, ScanText } from '@lucide/vue'
+import { Camera, ChevronRight, ClipboardList, CookingPot, LogIn, LogOut, ScanText } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import { bySoonestExpiry, inStock, pantry } from '../data/pantry'
@@ -77,8 +77,17 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
       Recipe ideas
     </button>
 
+    <button v-if="session" class="btn-primary btn-login" @click="signOut">
+      <LogOut :size="20" :stroke-width="1.75" />
+      Sign out
+    </button>
+    <button v-else class="btn-primary btn-login" @click="router.push('/login')">
+      <LogIn :size="20" :stroke-width="1.75" />
+      Log in
+    </button>
+
     <p class="account">
-      <template v-if="session">Signed in as {{ session.user.email }} · <button @click="signOut">Sign out</button></template>
+      <template v-if="session">Signed in as {{ session.user.email }}</template>
       <template v-else-if="!apiConfigured">Demo mode – sample data</template>
     </p>
   </main>
@@ -164,6 +173,8 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
 .note { padding: 18px; border-radius: var(--radius-lg); background: var(--color-surface); font-size: 14px; color: var(--color-text-muted); }
 .note.error { color: var(--fresh-red-text); }
 
+/* Same size as "Recipe ideas", in warm amber so the two are easy to tell apart */
+.btn-login { background: var(--fresh-amber-bg); color: var(--fresh-amber-text); border: 1.5px solid var(--fresh-amber-text); }
+
 .account { margin: 4px 0 8px; text-align: center; font-size: 12px; color: var(--color-text-muted); }
-.account button { color: var(--color-primary); font-weight: 600; font-size: 12px; }
 </style>
