@@ -39,4 +39,6 @@
 
   /* Type */
   --font: 'Inter Variable', -apple-system, system-ui, sans-serif;
+  /* Headlines: same rounded look as the logo lettering (falls back to the normal font until Nunito is installed) */
+  --font-display: 'Nunito Variable', var(--font);
 }

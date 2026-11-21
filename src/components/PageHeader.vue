@@ -27,9 +27,22 @@ const { logo } = defineProps<{ title: string; subtitle?: string; logo?: boolean;
 <style scoped>
 .header { padding: 12px var(--page-padding) 22px; }
 .title-row { display: flex; align-items: center; justify-content: space-between; }
-h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
-.title { display: flex; align-items: center; gap: 10px; }
-.mark { width: 34px; height: 34px; flex-shrink: 0; }
+h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2; /* enough room for letters like "g" and "p" – no cut-off at the bottom */
+  letter-spacing: -0.01em;
+}
+/* Symbol + title on one line, vertically centred to each other */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.mark { width: 30px; height: 30px; flex-shrink: 0; }
 .logo-title { line-height: 0; }
 .logo { display: block; height: 38px; width: auto; }
 .subtitle { margin-top: 4px; font-size: 13px; font-weight: 500; color: var(--color-text-muted); }

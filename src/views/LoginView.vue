@@ -159,7 +159,7 @@ input:focus {
 }
 .welcome-text {
   /* Same rounded, heavy look as the logo lettering (Nunito ExtraBold; falls back to Inter until it is installed) */
-  font-family: "Nunito Variable", var(--font);
+  font-family: var(--font-display);
   font-size: 34px;
   font-weight: 800;
   letter-spacing: -0.01em;
