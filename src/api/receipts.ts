@@ -26,12 +26,21 @@ export interface ReceiptAnalysis {
   referenceDate: string
   referenceDateSource: string
   items: ScannedItem[]
+  /** SHA-256 of the file (64 hex chars). Send it back unchanged with POST /Items so duplicates are detected. */
+  fileHash?: string | null
 }
 
 /** Error with a message we can show to the user (MVP step 1: error handling) */
 export class ScanError extends Error {}
 
-export async function analyzeReceipt(image: Blob): Promise<ReceiptAnalysis> {
+/** 409: this receipt was already saved. The user may still choose "Add anyway" (force = true). */
+export class DuplicateReceiptError extends ScanError {
+  constructor(public savedOn: string | null) {
+    super(savedOn ? `This receipt was already saved on ${savedOn}.` : 'This receipt was already saved.')
+  }
+}
+
+export async function analyzeReceipt(image: Blob, force = false): Promise<ReceiptAnalysis> {
   if (!apiConfigured) return demoAnalysis()
 
   const form = new FormData()
@@ -39,7 +48,7 @@ export async function analyzeReceipt(image: Blob): Promise<ReceiptAnalysis> {
 
   let res: Response
   try {
-    res = await apiFetch('/api/v1/Receipts', { method: 'POST', body: form })
+    res = await apiFetch(`/api/v1/Receipts${force ? '?force=true' : ''}`, { method: 'POST', body: form })
   } catch {
     throw new ScanError('No connection to the server. Check your internet and try again.')
   }
@@ -47,6 +56,11 @@ export async function analyzeReceipt(image: Blob): Promise<ReceiptAnalysis> {
   if (res.ok) return (await res.json()) as ReceiptAnalysis
 
   // Status codes from ReceiptEndpoints.cs
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => null)) as { code?: string; message?: string } | null
+    // message: "This file was already saved (reference date 2026-11-21). …"
+    throw new DuplicateReceiptError(body?.message?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null)
+  }
   switch (res.status) {
     case 400: throw new ScanError('This file can’t be used. Please take a photo (JPEG or PNG, max. 10 MB).')
     case 401: throw new ScanError('Your login has expired. Please sign in again.')

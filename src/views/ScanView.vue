@@ -12,7 +12,7 @@ import { useRouter } from 'vue-router'
 import { Camera, ChevronLeft, ImageUp, Plus, RotateCcw, ScanText } from '@lucide/vue'
 import ReviewItem from '../components/ReviewItem.vue'
 import { resizeImage } from '../lib/image'
-import { analyzeReceipt, ScanError, type ScannedItem } from '../api/receipts'
+import { analyzeReceipt, DuplicateReceiptError, ScanError, type ScannedItem } from '../api/receipts'
 import { addItems, type StoragePlace } from '../data/pantry'
 
 const router = useRouter()
@@ -24,6 +24,9 @@ const items = ref<ScannedItem[]>([])
 const reference = ref({ date: new Date().toISOString().slice(0, 10), source: 'currentDate' })
 const saving = ref(false)
 const saveError = ref('')
+const fileHash = ref<string | null>(null) // from POST /Receipts, sent back unchanged with the items
+const duplicate = ref(false)              // true = the backend said 409 "already saved"
+let lastImage: Blob | undefined           // kept so "Add anyway" can upload the same photo again
 
 // Two hidden file inputs: one opens the camera, one the photo library
 const cameraInput = ref<HTMLInputElement>()
@@ -36,13 +39,30 @@ async function onFileChosen(event: Event) {
   if (!file) return
 
   step.value = 'analyzing'
+  duplicate.value = false
   try {
-    const image = await resizeImage(file)
-    const analysis = await analyzeReceipt(image)
+    lastImage = await resizeImage(file)
+  } catch {
+    errorMessage.value = 'Something went wrong. Please try again.'
+    step.value = 'error'
+    return
+  }
+  await analyze(false)
+}
+
+/** Sends the photo to the backend. force = true is the "Add anyway" case for duplicate receipts. */
+async function analyze(force: boolean) {
+  if (!lastImage) return
+  step.value = 'analyzing'
+  duplicate.value = false
+  try {
+    const analysis = await analyzeReceipt(lastImage, force)
     items.value = analysis.items
     reference.value = { date: analysis.referenceDate, source: analysis.referenceDateSource }
+    fileHash.value = analysis.fileHash ?? null
     step.value = 'review'
   } catch (e) {
+    duplicate.value = e instanceof DuplicateReceiptError
     errorMessage.value = e instanceof ScanError ? e.message : 'Something went wrong. Please try again.'
     step.value = 'error'
   }
@@ -79,6 +99,7 @@ async function confirm() {
     })),
     reference.value.date,
     reference.value.source,
+    fileHash.value,
   )
   saving.value = false
   if (error) saveError.value = error
@@ -125,10 +146,13 @@ async function confirm() {
 
     <!-- 3. Error -->
     <section v-else-if="step === 'error'" class="center">
-      <p class="hero-title">That didn’t work</p>
+      <p class="hero-title">{{ duplicate ? 'Receipt already saved' : 'That didn’t work' }}</p>
       <p class="hero-text">{{ errorMessage }}</p>
-      <button class="btn-primary" @click="step = 'start'">
-        <RotateCcw :size="18" /> Try again
+      <button v-if="duplicate" class="btn-primary" @click="analyze(true)">
+        <Plus :size="18" /> Add anyway
+      </button>
+      <button :class="duplicate ? 'btn-secondary again' : 'btn-primary'" @click="step = 'start'">
+        <RotateCcw :size="18" /> {{ duplicate ? 'Scan another receipt' : 'Try again' }}
       </button>
     </section>
 
@@ -182,6 +206,7 @@ async function confirm() {
 /* Waiting + error */
 .center { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 60px 12px; text-align: center; }
 .center .btn-primary { margin-top: 12px; }
+.center .again { width: 100%; max-width: 320px; }
 .spinner {
   width: 44px; height: 44px; margin-bottom: 8px;
   border: 4px solid var(--color-tile); border-top-color: var(--color-primary); border-radius: 50%;

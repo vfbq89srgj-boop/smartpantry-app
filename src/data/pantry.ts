@@ -150,7 +150,7 @@ export type NewItem = Omit<PantryItem, 'id' | 'status' | 'statusChangedAt'>
   With backend: POST /api/v1/Items, then reload. Demo mode: add locally.
   Returns an error message or null.
 */
-export async function addItems(newItems: NewItem[], referenceDate: string, referenceDateSource: string): Promise<string | null> {
+export async function addItems(newItems: NewItem[], referenceDate: string, referenceDateSource: string, fileHash?: string | null): Promise<string | null> {
   if (!apiConfigured) {
     let nextId = Math.max(0, ...pantry.items.map((i) => i.id)) + 1
     for (const item of newItems) pantry.items.push({ ...item, id: nextId++, status: 'in_stock', statusChangedAt: null })
@@ -163,6 +163,7 @@ export async function addItems(newItems: NewItem[], referenceDate: string, refer
       body: JSON.stringify({
         referenceDate,
         referenceDateSource,
+        fileHash, // exactly as POST /Receipts returned it – without it no duplicate is detected
         items: newItems.map((i) => ({ ...i, storageNote: null, estimationNote: null })),
       }),
     })
