@@ -40,6 +40,9 @@ export interface Stats {
   expiredItems: StatsItem[];
 }
 
+/** Period used for "All time" (10 years) */
+export const ALL_TIME_DAYS = 3650;
+
 export async function fetchStats(days: number): Promise<Stats> {
   if (!apiConfigured) return demoStats(days);
   let res: Response;
@@ -49,6 +52,8 @@ export async function fetchStats(days: number): Promise<Stats> {
     throw new Error("No connection to the server.");
   }
   if (res.ok) return (await res.json()) as Stats;
+  // Backend may limit the period – then show one year instead of "all time"
+  if (res.status === 400 && days > 365) return fetchStats(365);
   if (res.status === 401)
     throw new Error("Your login has expired. Please sign in again.");
   if (res.status === 404)

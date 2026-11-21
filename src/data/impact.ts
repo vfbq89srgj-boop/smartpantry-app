@@ -66,7 +66,15 @@ export function calculateImpact(stats: Stats, days: number, householdSize: numbe
   const co2Min = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i) * factorFor(i.category).co2Min, 0)
   const co2Max = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i) * factorFor(i.category).co2Max, 0)
 
-  const weeks = Math.max(1, days / 7)
+  // Weeks actually covered: from the first purchase in the period until today (max. the chosen period)
+  const firstPurchase = stats.items
+    .map((i) => i.purchaseDate)
+    .filter(Boolean)
+    .sort()[0]
+  const spanDays = firstPurchase
+    ? Math.min(days, Math.ceil((Date.now() - new Date(firstPurchase).getTime()) / 86_400_000) + 1)
+    : days
+  const weeks = Math.max(1, spanDays / 7)
   const yourKgPerPersonWeek = wastedKg / weeks / householdSize
 
   // Categories thrown away most (by quantity)

@@ -12,6 +12,13 @@ import { calculateImpact, impactState, loadImpact, setHouseholdSize } from '../d
 import { FACTORS_VERSION } from '../data/impactFactors'
 import { categoryOf } from '../data/categories'
 import { setStatus, type ItemStatus } from '../data/pantry'
+import { ALL_TIME_DAYS } from '../api/stats'
+
+const periods = [
+  { days: 30, label: 'Last 30 days' },
+  { days: 365, label: 'Last year' },
+  { days: ALL_TIME_DAYS, label: 'All time' },
+]
 
 onMounted(loadImpact)
 
@@ -59,8 +66,8 @@ async function resolve(id: number, status: ItemStatus) {
 
   <main class="page">
     <div class="chips" role="group" aria-label="Period">
-      <button v-for="d in [7, 30]" :key="d" class="chip" :class="{ active: impactState.days === d }" @click="changePeriod(d)">
-        Last {{ d }} days
+      <button v-for="p in periods" :key="p.days" class="chip" :class="{ active: impactState.days === p.days }" @click="changePeriod(p.days)">
+        {{ p.label }}
       </button>
     </div>
 
@@ -135,18 +142,18 @@ async function resolve(id: number, status: ItemStatus) {
 
       <!-- 4. Thrown away: kg, money, CO2e (estimated) -->
       <section class="tiles">
-        <div class="card tile">
-          <Weight :size="20" :stroke-width="1.75" />
+        <div class="tile weight">
+          <span class="tile-icon"><Weight :size="20" :stroke-width="2" /></span>
           <p class="tile-val">≈ {{ kg(impact.wastedKg) }} kg</p>
           <p class="tile-label">food thrown away</p>
         </div>
-        <div class="card tile">
-          <Euro :size="20" :stroke-width="1.75" />
+        <div class="tile money">
+          <span class="tile-icon"><Euro :size="20" :stroke-width="2" /></span>
           <p class="tile-val">≈ {{ eur(impact.moneyLost) }} €</p>
           <p class="tile-label">money in the bin</p>
         </div>
-        <div class="card tile wide">
-          <Car :size="20" :stroke-width="1.75" />
+        <div class="tile co2 wide">
+          <span class="tile-icon"><Car :size="20" :stroke-width="2" /></span>
           <p class="tile-val">≈ {{ kg(impact.co2Min) }}–{{ kg(impact.co2Max) }} kg CO₂e</p>
           <p class="tile-label">wasted with that food – about {{ Math.round(impact.carKm) }} km by car</p>
         </div>
@@ -232,11 +239,26 @@ h2 { font-size: 16px; font-weight: 600; }
 .small-print { margin-top: 6px; font-size: 11px; }
 
 /* Tiles */
+/* Coloured tiles: sage = weight, amber = money, dark green = CO2e */
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.tile { padding: 14px 16px; color: var(--color-primary); }
-.tile.wide { grid-column: 1 / -1; }
-.tile-val { margin-top: 6px; font-size: 22px; font-weight: 700; color: var(--color-text); white-space: nowrap; }
-.tile-label { font-size: 12px; color: var(--color-text-muted); }
+.tile { padding: 16px; border-radius: var(--radius-lg); }
+.tile.wide { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: center; }
+.tile.wide .tile-icon { grid-row: span 2; margin: 0; }
+.tile-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 10px; border-radius: 12px; }
+.tile-val { font-size: 22px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.tile-label { margin-top: 2px; font-size: 12px; }
+
+.tile.weight { background: var(--color-tile); color: var(--color-text); }
+.tile.weight .tile-icon { background: var(--color-primary); color: var(--color-on-primary); }
+.tile.weight .tile-label { color: var(--color-text-muted); }
+
+.tile.money { background: var(--fresh-amber-bg); color: var(--fresh-amber-text); }
+.tile.money .tile-icon { background: var(--fresh-amber-text); color: var(--fresh-amber-bg); }
+
+.tile.co2 { background: var(--color-primary); color: var(--color-on-primary); }
+.tile.co2 .tile-icon { background: var(--color-accent); color: var(--color-primary); }
+.tile.co2 .tile-label { color: var(--color-on-primary-muted); }
+.tile.co2 .tile-val { white-space: normal; }
 
 .top { padding: 16px; }
 .top .name { font-size: 14px; }
