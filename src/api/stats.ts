@@ -24,7 +24,8 @@ export interface StatsItem {
   discardedQuantity: number;
   // coming from the receipt later (Benny) – optional until then
   weightKg?: number | null;
-  price?: number | null; // EUR per unit (DB column food_items.price)
+  price?: number | null;     // EUR for the whole receipt line
+  unitPrice?: number | null; // EUR per unit (calculated by the backend)
 }
 
 export interface Stats {
@@ -54,8 +55,6 @@ export interface DateRange {
   to: string;
 }
 
-/** "2026-11-21" → "21.11.2026" (date format of the backend's custom period) */
-const toBackendDate = (d: string) => d.split("-").reverse().join(".");
 
 /** "YYYY-MM-DD" that is `days` before today (local time) */
 function daysAgo(days: number): string {
@@ -65,18 +64,22 @@ function daysAgo(days: number): string {
 }
 
 /*
-  7 / 30 / 90 days → ?days=…
-  everything else (year, all time, custom) → Benny's custom period:
-    ?period=custom&startDate=01.10.2025&endDate=11.12.2026
+  Backend parameters (see Swagger):
+    7 / 30 / 90 days → ?days=…
+    all time         → ?period=all
+    year / custom    → ?period=custom&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+  ISO dates, because the server's language settings could read 01.10.2025 as January 10th.
 */
 export async function fetchStats(days: number, range?: DateRange): Promise<Stats> {
   if (!apiConfigured) return demoStats(days);
-  if (!range && ![7, 30, 90].includes(days)) range = { from: daysAgo(days - 1), to: daysAgo(0) };
+  if (!range && days !== ALL_TIME_DAYS && ![7, 30, 90].includes(days)) range = { from: daysAgo(days - 1), to: daysAgo(0) };
   let res: Response;
   try {
     const query = range
-      ? `period=custom&startDate=${toBackendDate(range.from)}&endDate=${toBackendDate(range.to)}`
-      : `days=${days}`;
+      ? `period=custom&startDate=${range.from}&endDate=${range.to}`
+      : days === ALL_TIME_DAYS
+        ? "period=all"
+        : `days=${days}`;
     res = await apiFetch(`${STATS_PATH}?${query}`);
   } catch {
     throw new Error("No connection to the server.");

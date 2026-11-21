@@ -66,7 +66,9 @@ export function periodDays(): number {
 }
 
 const weightOf = (i: StatsItem) => i.weightKg ?? factorFor(i.category).weightKg
-const priceOf = (i: StatsItem) => i.price ?? factorFor(i.category).priceEur
+// Price per unit: from the backend, else line price ÷ quantity, else the category default
+const priceOf = (i: StatsItem) =>
+  i.unitPrice ?? (i.price != null && i.quantity ? i.price / i.quantity : null) ?? factorFor(i.category).priceEur
 
 export function calculateImpact(stats: Stats, days: number, householdSize: number) {
   const eaten = stats.summary.itemsEaten
