@@ -1,14 +1,22 @@
 <!-- The app frame: the current screen (RouterView) plus the tab bar at the bottom -->
 <script setup lang="ts">
-import { watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TabBar from './components/TabBar.vue'
+import SplashScreen from './components/SplashScreen.vue'
 import { session } from './data/auth'
 import { loadItems } from './data/pantry'
 import { loadShoppingList } from './data/shoppingList'
 
 const route = useRoute()
 const router = useRouter()
+
+// Logo splash once per app start (a reload in the same tab skips it)
+const showSplash = ref(!sessionStorage.getItem('splashShown'))
+function splashDone() {
+  sessionStorage.setItem('splashShown', '1')
+  showSplash.value = false
+}
 
 // After login: load the pantry. After logout (or expired session): back to login.
 watch(
@@ -24,6 +32,7 @@ watch(
 </script>
 
 <template>
+  <SplashScreen v-if="showSplash" @done="splashDone" />
   <div class="app" :class="{ 'no-tabs': route.meta.public }">
     <RouterView />
   </div>

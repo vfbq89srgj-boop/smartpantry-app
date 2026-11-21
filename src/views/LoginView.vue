@@ -2,8 +2,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Leaf } from "@lucide/vue";
-import { signIn } from "../data/auth";
+import logo from "../assets/logo/pantryx-logo.svg";
+import symbol from "../assets/logo/pantryx-zeichen.svg";
+import { displayName, signIn } from "../data/auth";
 
 const router = useRouter();
 const email = ref("");
@@ -34,8 +35,7 @@ async function submit() {
 <template>
   <main class="login">
     <div class="brand">
-      <div class="logo"><Leaf :size="34" :stroke-width="1.75" /></div>
-      <h1>PantryX</h1>
+      <h1 class="logo"><img :src="logo" alt="PantryX" /></h1>
       <p>Waste less. Eat better.</p>
     </div>
 
@@ -65,10 +65,10 @@ async function submit() {
 
     <Transition name="fade">
       <div v-if="welcome" class="welcome" role="status">
-        <p class="welcome-text">Welcome to PantryX</p>
-        <div class="welcome-logo">
-          <Leaf :size="60" :stroke-width="1.75" />
-        </div>
+        <p class="welcome-text">
+          {{ displayName ? `Hi, ${displayName}!` : "Welcome to PantryX" }}
+        </p>
+        <img :src="symbol" alt="" class="welcome-logo" />
       </div>
     </Transition>
   </main>
@@ -91,18 +91,13 @@ async function submit() {
   text-align: center;
 }
 .logo {
-  display: grid;
-  place-items: center;
-  width: 68px;
-  height: 68px;
-  margin-bottom: 6px;
-  border-radius: 20px;
-  background: var(--color-primary);
-  color: var(--color-accent);
+  margin-bottom: 4px;
+  line-height: 0;
 }
-.brand h1 {
-  font-size: 30px;
-  font-weight: 600;
+.logo img {
+  display: block;
+  width: min(250px, 70vw);
+  height: auto;
 }
 .brand p {
   color: var(--color-text-muted);
@@ -166,13 +161,8 @@ input:focus {
   animation: rise 1s ease-out both;
 }
 .welcome-logo {
-  display: grid;
-  place-items: center;
-  width: 104px;
-  height: 104px;
-  border-radius: 30px;
-  background: var(--color-primary);
-  color: var(--color-accent);
+  width: 130px;
+  height: 130px;
   animation: pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
 }
 .fade-enter-active {

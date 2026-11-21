@@ -134,6 +134,7 @@ function undo() {
 
 <template>
   <PageHeader
+    mark
     title="Pantry"
     :subtitle="`${bySoonestExpiry.length} items · what expires first is on top`" />
 

@@ -26,7 +26,7 @@ const sourceLabel = { manual: '', pantry: 'From pantry', recipe: 'For a recipe' 
 </script>
 
 <template>
-  <PageHeader title="Shopping list" :subtitle="`${openEntries.length} to buy`" />
+  <PageHeader mark title="Shopping list" :subtitle="`${openEntries.length} to buy`" />
 
   <main class="page">
     <form class="add" @submit.prevent="add">

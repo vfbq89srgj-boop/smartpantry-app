@@ -9,8 +9,9 @@
   --color-surface-soft: #f5f4ea;/* icon tiles */
   --color-tile: #eaf0e0;        /* sage stat tiles, active tab */
   --color-accent: #ddebcb;      /* light green button on dark green */
-  --color-primary: #245b42;     /* main green: buttons, links */
-  --color-text: #183e32;        /* dark green text */
+  --color-brand: #1e4d3a;       /* logo dark green (splash, logo background) */
+  --color-primary: #1e4d3a;     /* main green: buttons, links – same as the logo */
+  --color-text: #173a2c;        /* dark green text */
   --color-text-muted: #67776c;  /* grey-green secondary text */
   --color-on-primary: #ffffff;
   --color-on-primary-muted: #e4eddf;

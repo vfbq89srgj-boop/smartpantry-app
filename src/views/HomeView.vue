@@ -24,7 +24,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
 </script>
 
 <template>
-  <PageHeader title="PantryX" subtitle="Waste less. Eat better." />
+  <PageHeader title="PantryX" logo subtitle="Waste less. Eat better." />
 
   <main class="page">
     <PullIndicator :pull="pull" :refreshing="refreshing" />

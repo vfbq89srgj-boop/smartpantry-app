@@ -87,7 +87,7 @@ async function resolve(id: number, status: ItemStatus) {
 </script>
 
 <template>
-  <PageHeader title="Impact" subtitle="What happens to the food you buy" />
+  <PageHeader mark title="Impact" subtitle="What happens to the food you buy" />
 
   <main class="page">
     <PullIndicator :pull="pull" :refreshing="refreshing" />
