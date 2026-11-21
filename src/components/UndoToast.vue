@@ -25,7 +25,7 @@ defineEmits<{ undo: [] }>()
   position: fixed;
   left: 16px;
   right: 16px;
-  bottom: calc(96px + env(safe-area-inset-bottom));
+  bottom: calc(75px + env(safe-area-inset-bottom));
   max-width: 488px;
   margin: 0 auto;
   display: flex;

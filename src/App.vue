@@ -45,7 +45,7 @@ watch(
   margin: 0 auto;
   /* room for the iPhone status bar on top and the tab bar at the bottom */
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  padding-bottom: calc(69px + env(safe-area-inset-bottom));
 }
 .app.no-tabs { padding-bottom: env(safe-area-inset-bottom); }
 </style>

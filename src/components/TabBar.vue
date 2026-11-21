@@ -14,7 +14,7 @@ const tabs = [
   <nav class="tabbar">
     <RouterLink v-for="tab in tabs" :key="tab.to" :to="tab.to" class="tab">
       <span class="icon-area">
-        <component :is="tab.icon" :size="21" :stroke-width="1.75" />
+        <component :is="tab.icon" :size="22" :stroke-width="1.75" />
       </span>
       <span class="label">{{ tab.label }}</span>
     </RouterLink>
@@ -28,7 +28,9 @@ const tabs = [
   right: 0;
   bottom: 0;
   display: flex;
-  padding: 10px 14px calc(8px + env(safe-area-inset-bottom));
+  gap: 4px;
+  /* slim like a native iOS tab bar: the labels sit just above the home indicator */
+  padding: 6px 10px max(6px, calc(env(safe-area-inset-bottom) - 12px));
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
 }
@@ -37,21 +39,21 @@ const tabs = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 2px;
+  padding: 4px 0;
+  border-radius: 14px;
   text-decoration: none;
   color: var(--color-text-muted);
 }
 .icon-area {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 30px;
-  border-radius: 12px;
+  height: 28px;
 }
 .label { font-size: 11px; font-weight: 500; }
 
-/* The tab of the screen you are on ("exact" so "/" is not active everywhere) */
-.router-link-exact-active { color: var(--color-primary); }
-.router-link-exact-active .icon-area { background: var(--color-tile); }
+/* The tab of the screen you are on ("exact" so "/" is not active everywhere):
+   one light-green pill behind icon and label */
+.router-link-exact-active { color: var(--color-primary); background: var(--color-tile); }
 .router-link-exact-active .label { font-weight: 600; }
 </style>

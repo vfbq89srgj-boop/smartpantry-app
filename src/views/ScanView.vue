@@ -421,7 +421,7 @@ async function confirm() {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(76px + env(safe-area-inset-bottom));
+  bottom: calc(55px + env(safe-area-inset-bottom));
   padding: 12px var(--page-padding);
   background: linear-gradient(
     to top,
