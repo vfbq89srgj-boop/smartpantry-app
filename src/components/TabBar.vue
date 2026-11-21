@@ -28,9 +28,9 @@ const tabs = [
   right: 0;
   bottom: 0;
   display: flex;
-  gap: 4px;
+  gap: 14px;
   /* slim like a native iOS tab bar: the labels sit just above the home indicator */
-  padding: 6px 10px max(6px, calc(env(safe-area-inset-bottom) - 12px));
+  padding: 6px 20px max(6px, calc(env(safe-area-inset-bottom) - 12px));
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
 }
@@ -41,7 +41,7 @@ const tabs = [
   align-items: center;
   gap: 2px;
   padding: 4px 0;
-  border-radius: 14px;
+  border-radius: 12px;
   text-decoration: none;
   color: var(--color-text-muted);
 }
