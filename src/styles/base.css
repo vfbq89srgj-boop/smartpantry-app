@@ -11,6 +11,15 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/*
+  Android Chrome reloads the page when you pull down at the top – that would fight our own
+  pull-to-refresh. iOS has no such reload, so it keeps its native bounce and momentum scrolling.
+  (-webkit-touch-callout exists only on iOS, so this rule applies to everything else.)
+*/
+@supports not (-webkit-touch-callout: none) {
+  html, body { overscroll-behavior-y: contain; }
+}
+
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
 
 h1, h2, h3, p { margin: 0; }

@@ -28,9 +28,9 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
       return
     }
     pull.value = Math.min(dy * 0.5, threshold * 1.5)
-    // Only while pulling down at the very top: stop the browser's own pull-to-reload (Android).
-    // Normal scrolling is never touched, so it keeps its natural feel.
-    if (e.cancelable) e.preventDefault()
+    // No preventDefault here on purpose: a non-passive touchmove listener makes iOS scrolling
+    // stiff and kills the momentum ("keeps scrolling after a flick"). The browser's own
+    // pull-to-reload on Android is switched off with CSS instead (see base.css).
   }
 
   async function end() {
@@ -50,7 +50,7 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
 
   onMounted(() => {
     window.addEventListener('touchstart', start, { passive: true })
-    window.addEventListener('touchmove', move, { passive: false }) // needed for preventDefault above
+    window.addEventListener('touchmove', move, { passive: true })
     window.addEventListener('touchend', end)
     window.addEventListener('touchcancel', end)
   })
