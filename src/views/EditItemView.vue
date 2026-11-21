@@ -52,6 +52,12 @@ const errors = computed(() => {
   return list
 })
 
+// "Enter a name." only shows once the user has left the name field (no red text on a fresh form)
+const nameTouched = ref(!isNew)
+const shownErrors = computed(() =>
+  nameTouched.value ? errors.value : errors.value.filter((e) => e !== 'Enter a name.'),
+)
+
 const saving = ref(false)
 const saveError = ref('')
 
@@ -93,7 +99,7 @@ function onDateChange() {
     <section class="card form">
       <div class="top">
         <div class="icon-tile"><component :is="icon" :size="22" :stroke-width="1.75" /></div>
-        <input v-model="name" class="name" aria-label="Item name" placeholder="e.g. Apples" :autofocus="isNew" />
+        <input v-model="name" class="name" aria-label="Item name" placeholder="e.g. Apples" :autofocus="isNew" @blur="nameTouched = true" />
       </div>
 
       <div class="fields">
@@ -142,7 +148,7 @@ function onDateChange() {
       </p>
     </section>
 
-    <p v-for="e in errors" :key="e" class="error">{{ e }}</p>
+    <p v-for="e in shownErrors" :key="e" class="error">{{ e }}</p>
     <p v-if="saveError" class="error">{{ saveError }}</p>
 
     <button class="btn-primary" :disabled="saving || errors.length > 0" @click="save">

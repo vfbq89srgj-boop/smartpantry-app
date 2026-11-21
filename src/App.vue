@@ -34,7 +34,8 @@ watch(
 <template>
   <SplashScreen v-if="showSplash" @done="splashDone" />
   <div class="app" :class="{ 'no-tabs': route.meta.public }">
-    <RouterView />
+    <!-- key: a new screen instance per path, e.g. "Edit item" → "Add item" never reuses the old form -->
+    <RouterView :key="route.path" />
   </div>
   <TabBar v-if="!route.meta.public" />
 </template>
