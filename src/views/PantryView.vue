@@ -241,11 +241,11 @@ function undo() {
     <div v-else class="card empty">
       <p class="empty-title">Nothing here yet</p>
       <p class="empty-text">
-        Scan your next receipt and your groceries appear here
-        automatically.
+        Scan your next receipt or your groceries and they appear
+        here automatically.
       </p>
       <button class="btn-primary" @click="router.push('/scan')">
-        <Camera :size="20" :stroke-width="1.75" /> Scan receipt
+        <Camera :size="20" :stroke-width="1.75" /> Scan groceries
       </button>
       <button class="add-manual" @click="router.push('/pantry/new')">
         or add an item by hand

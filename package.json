@@ -6,9 +6,14 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "ios": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:icons": "npx capacitor-assets generate --ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@fontsource-variable/inter": "^5.2.8",
     "@lucide/vue": "^1.77.0",
     "@supabase/supabase-js": "^2.119.2",
@@ -16,6 +21,8 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^8.6.2",
     "@vitejs/plugin-vue": "^6.0.10",
     "typescript": "^6.0.3",
     "vite": "^8.3.6",

@@ -5,7 +5,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Camera, ChevronRight, ClipboardList, CookingPot, LogIn, LogOut, ScanText } from '@lucide/vue'
+import { Camera, ChevronRight, ClipboardList, CookingPot, LogIn, LogOut } from '@lucide/vue'
+import ScanIcon from '../components/ScanIcon.vue'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import PullIndicator from '../components/PullIndicator.vue'
@@ -32,12 +33,12 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
     <section class="hero">
       <div class="hero-top">
         <h2>Shop. Scan. Stock.</h2>
-        <ScanText :size="40" :stroke-width="1.5" class="hero-icon" />
+        <ScanIcon :size="44" :stroke-width="1.5" class="hero-icon" />
       </div>
-      <p class="hero-text">Scan a receipt and our AI adds your groceries – with expiry dates – in one go.</p>
+      <p class="hero-text">Snap your receipt or your groceries – our AI adds them, with expiry dates, in one go.</p>
       <button class="scan-btn" @click="router.push('/scan')">
         <Camera :size="20" :stroke-width="1.75" />
-        Scan receipt
+        Scan groceries
       </button>
     </section>
 
@@ -61,7 +62,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
       </div>
       <p v-if="pantry.error" class="note error">{{ pantry.error }}</p>
       <p v-else-if="pantry.loading" class="note">Loading your pantry…</p>
-      <p v-else-if="!useFirst.length" class="note">Your pantry is empty – scan your first receipt.</p>
+      <p v-else-if="!useFirst.length" class="note">Your pantry is empty – scan your groceries to get started.</p>
       <div v-else class="card list">
         <ItemRow v-for="item in useFirst" :key="item.id" :item="item" />
       </div>

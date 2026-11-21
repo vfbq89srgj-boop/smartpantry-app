@@ -15,7 +15,6 @@ import {
   ImageUp,
   Plus,
   RotateCcw,
-  ScanText,
 } from "@lucide/vue";
 import ReviewItem from "../components/ReviewItem.vue";
 import { resizeImage } from "../lib/image";
@@ -26,6 +25,7 @@ import {
   ScanError,
   type ScannedItem,
 } from "../api/receipts";
+import ScanIcon from "../components/ScanIcon.vue";
 import { addItems, type StoragePlace } from "../data/pantry";
 
 const router = useRouter();
@@ -153,7 +153,7 @@ async function confirm() {
       <ChevronLeft :size="24" />
     </button>
     <h1>
-      {{ step === "review" ? "Check your items" : "Scan receipt" }}
+      {{ step === "review" ? "Check your items" : "Scan groceries" }}
     </h1>
   </header>
 
@@ -175,8 +175,8 @@ async function confirm() {
     <!-- 1. Start -->
     <section v-if="step === 'start'" class="start">
       <div class="hero">
-        <ScanText :size="56" :stroke-width="1.25" />
-        <p class="hero-title">Snap your receipt</p>
+        <ScanIcon :size="64" :stroke-width="1.25" />
+        <p class="hero-title">Snap a receipt or your groceries</p>
         <p class="hero-text">
           Our AI reads every item, picks the right storage place and
           estimates how long it stays fresh.
@@ -190,8 +190,9 @@ async function confirm() {
         library
       </button>
       <ul class="tips">
-        <li>Lay the receipt flat, in good light</li>
-        <li>Make sure the whole receipt is visible</li>
+        <li>Receipt: lay it flat and fully visible</li>
+        <li>Groceries: spread them out, labels facing up</li>
+        <li>Use good light</li>
         <li>Your photo is never stored</li>
       </ul>
     </section>
@@ -199,7 +200,7 @@ async function confirm() {
     <!-- 2. Waiting for the AI -->
     <section v-else-if="step === 'analyzing'" class="center">
       <div class="spinner" />
-      <p class="hero-title">Reading your receipt…</p>
+      <p class="hero-title">Reading your photo…</p>
       <p class="hero-text">This takes a few seconds.</p>
     </section>
 
