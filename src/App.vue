@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import TabBar from './components/TabBar.vue'
 import { session } from './data/auth'
 import { loadItems } from './data/pantry'
+import { loadShoppingList } from './data/shoppingList'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,8 +14,10 @@ const router = useRouter()
 watch(
   () => session.value?.user.id,
   (userId, previous) => {
-    if (userId) loadItems()
-    else if (previous) router.replace('/login')
+    if (userId) {
+      loadItems()
+      loadShoppingList()
+    } else if (previous) router.replace('/login')
   },
   { immediate: true },
 )

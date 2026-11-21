@@ -7,7 +7,7 @@
 import { ref } from 'vue'
 import { Check, Plus, X } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
-import { addToList, checkedEntries, clearChecked, openEntries, removeEntry, toggleEntry } from '../data/shoppingList'
+import { addToList, checkedEntries, clearChecked, openEntries, removeEntry, shoppingList, toggleEntry } from '../data/shoppingList'
 
 const newItem = ref('')
 const hint = ref('')
@@ -34,6 +34,7 @@ const sourceLabel = { manual: '', pantry: 'From pantry', recipe: 'For a recipe' 
       <button type="submit" aria-label="Add"><Plus :size="20" /></button>
     </form>
     <p v-if="hint" class="hint">{{ hint }}</p>
+    <p v-if="shoppingList.error" class="hint" role="alert">{{ shoppingList.error }}</p>
 
     <TransitionGroup v-if="openEntries.length" tag="ul" name="list" class="card entries">
       <li v-for="e in openEntries" :key="e.id">
