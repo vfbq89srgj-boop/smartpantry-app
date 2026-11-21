@@ -15,6 +15,7 @@ import {
   ImageUp,
   Plus,
   RotateCcw,
+  Snowflake,
 } from "@lucide/vue";
 import ReviewItem from "../components/ReviewItem.vue";
 import { resizeImage } from "../lib/image";
@@ -22,6 +23,7 @@ import { localDateString } from "../lib/date";
 import {
   analyzeReceipt,
   DuplicateReceiptError,
+  HumanDetectedError,
   ScanError,
   type ScannedItem,
 } from "../api/receipts";
@@ -40,6 +42,7 @@ const reference = ref({
 });
 const saving = ref(false);
 const saveError = ref("");
+const human = ref(false); // the AI saw a person – show the joke screen
 const fileHash = ref<string | null>(null); // from POST /Receipts, sent back unchanged with the items
 const duplicate = ref(false); // true = the backend said 409 "already saved"
 let lastImage: Blob | undefined; // kept so "Add anyway" can upload the same photo again
@@ -85,6 +88,7 @@ async function analyze(force: boolean) {
     step.value = "review";
   } catch (e) {
     duplicate.value = e instanceof DuplicateReceiptError;
+    human.value = e instanceof HumanDetectedError;
     errorMessage.value =
       e instanceof ScanError
         ? e.message
@@ -202,6 +206,17 @@ async function confirm() {
       <div class="spinner" />
       <p class="hero-title">Reading your photo…</p>
       <p class="hero-text">This takes a few seconds.</p>
+    </section>
+
+    <!-- 3a. Easter egg: the AI saw a person instead of food -->
+    <section v-else-if="step === 'error' && human" class="center">
+      <div class="human-badge"><Snowflake :size="40" :stroke-width="1.5" /></div>
+      <p class="priceless">Priceless.</p>
+      <p class="hero-title">But we can’t store this one.</p>
+      <p class="hero-text">{{ errorMessage }}</p>
+      <button class="btn-primary" @click="step = 'start'">
+        <RotateCcw :size="18" /> Try again
+      </button>
     </section>
 
     <!-- 3. Error -->
@@ -347,6 +362,21 @@ async function confirm() {
 .center .again {
   width: 100%;
   max-width: 320px;
+}
+.human-badge {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-accent);
+}
+.priceless {
+  font-size: 34px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--color-primary);
 }
 .spinner {
   width: 44px;

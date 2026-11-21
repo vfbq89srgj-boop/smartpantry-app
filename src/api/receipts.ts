@@ -43,6 +43,13 @@ export class DuplicateReceiptError extends ScanError {
   }
 }
 
+/** 422 with code "human_detected": the AI saw a person instead of food. Shown as a joke screen. */
+export class HumanDetectedError extends ScanError {
+  constructor() {
+    super('Please don’t put humans in the freezer. Scan your groceries instead.')
+  }
+}
+
 export async function analyzeReceipt(image: Blob, force = false): Promise<ReceiptAnalysis> {
   if (!apiConfigured) return demoAnalysis()
 
@@ -67,7 +74,11 @@ export async function analyzeReceipt(image: Blob, force = false): Promise<Receip
   switch (res.status) {
     case 400: throw new ScanError('This file can’t be used. Please take a photo (JPEG or PNG, max. 10 MB).')
     case 401: throw new ScanError('Your login has expired. Please sign in again.')
-    case 422: throw new ScanError('We couldn’t find any groceries on this photo. Please retake it with good light.')
+    case 422: {
+      const body = (await res.json().catch(() => null)) as { code?: string } | null
+      if (body?.code === 'human_detected') throw new HumanDetectedError()
+      throw new ScanError('We couldn’t find any groceries on this photo. Please retake it with good light.')
+    }
     case 504: throw new ScanError('The AI took too long. Please try again.')
     default: throw new ScanError('The AI is not available right now. Please try again in a moment.')
   }
