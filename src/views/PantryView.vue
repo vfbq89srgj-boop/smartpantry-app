@@ -37,7 +37,7 @@ import {
 } from "../data/pantry";
 
 const router = useRouter();
-const { pull, refreshing } = usePullToRefresh(loadItems);
+const { pull, refreshing, dragging } = usePullToRefresh(loadItems);
 
 // ----- Filter by storage place -----
 const filters: { label: string; value: StoragePlace | "all" }[] = [
@@ -139,7 +139,7 @@ function undo() {
     :subtitle="`${bySoonestExpiry.length} items · what expires first is on top`" />
 
   <main class="page">
-    <PullIndicator :pull="pull" :refreshing="refreshing" />
+    <PullIndicator :pull="pull" :refreshing="refreshing" :dragging="dragging" />
     <!-- Filter chips (scroll sideways on small phones) -->
     <div class="chips">
       <!-- Add an item by hand (no receipt) – POST /Items with referenceDateSource "manual" -->

@@ -25,7 +25,7 @@ const periods = [
 ]
 
 onMounted(loadImpact)
-const { pull, refreshing } = usePullToRefresh(loadImpact)
+const { pull, refreshing, dragging } = usePullToRefresh(loadImpact)
 
 const impact = computed(() =>
   impactState.stats
@@ -90,7 +90,7 @@ async function resolve(id: number, status: ItemStatus) {
   <PageHeader mark title="Impact" subtitle="What happens to the food you buy" />
 
   <main class="page">
-    <PullIndicator :pull="pull" :refreshing="refreshing" />
+    <PullIndicator :pull="pull" :refreshing="refreshing" :dragging="dragging" />
     <div class="chips" role="group" aria-label="Period">
       <button v-for="p in periods" :key="p.days" class="chip" :class="{ active: !impactState.custom && !showCustom && impactState.days === p.days }" @click="changePeriod(p.days)">
         {{ p.label }}

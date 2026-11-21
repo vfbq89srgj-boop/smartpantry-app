@@ -1,12 +1,14 @@
 /*
   Pull-to-refresh: drag down at the top of the page, release → onRefresh() runs.
-  Returns `pull` (current drag distance in px) and `refreshing` for the indicator.
+  Returns `pull` (drag distance in px, with rubber-band resistance), `dragging` and `refreshing` for the indicator.
 */
 import { onMounted, onUnmounted, ref } from 'vue'
 
 export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 70) {
   const pull = ref(0)
   const refreshing = ref(false)
+  const dragging = ref(false) // finger is down and pulling → indicator follows without animation
+  const MAX = threshold * 1.7
   let startY = 0
   let active = false
 
@@ -24,10 +26,13 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
     // content around while you scroll – that felt jerky.
     if (dy < 0 || window.scrollY > 0) {
       active = false
+      dragging.value = false
       pull.value = 0
       return
     }
-    pull.value = Math.min(dy * 0.5, threshold * 1.5)
+    // Rubber band: easy at the start, harder the further you pull, never beyond MAX
+    dragging.value = true
+    pull.value = MAX * (1 - Math.exp(-dy / (MAX * 0.9)))
     // No preventDefault here on purpose: a non-passive touchmove listener makes iOS scrolling
     // stiff and kills the momentum ("keeps scrolling after a flick"). The browser's own
     // pull-to-reload on Android is switched off with CSS instead (see base.css).
@@ -36,6 +41,7 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
   async function end() {
     if (!active) return
     active = false
+    dragging.value = false // from here on the indicator animates smoothly back / to the hold position
     if (pull.value >= threshold) {
       refreshing.value = true
       pull.value = threshold
@@ -61,5 +67,5 @@ export function usePullToRefresh(onRefresh: () => Promise<unknown>, threshold = 
     window.removeEventListener('touchcancel', end)
   })
 
-  return { pull, refreshing }
+  return { pull, refreshing, dragging }
 }

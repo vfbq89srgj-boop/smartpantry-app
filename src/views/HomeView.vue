@@ -18,7 +18,7 @@ import { apiConfigured } from '../api/client'
 
 const router = useRouter()
 // Home shows pantry items and the shopping-list count → refresh both
-const { pull, refreshing } = usePullToRefresh(() => Promise.all([loadItems(), loadShoppingList()]))
+const { pull, refreshing, dragging } = usePullToRefresh(() => Promise.all([loadItems(), loadShoppingList()]))
 
 // The 3 items that expire first – "Use these first"
 const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
@@ -28,7 +28,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
   <PageHeader title="PantryX" logo subtitle="Waste less. Eat better." />
 
   <main class="page">
-    <PullIndicator :pull="pull" :refreshing="refreshing" />
+    <PullIndicator :pull="pull" :refreshing="refreshing" :dragging="dragging" />
     <!-- Receipt scanner hero card -->
     <section class="hero">
       <div class="hero-top">
