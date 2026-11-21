@@ -30,6 +30,20 @@ function changeQty(step: number) {
 function onDateChange() {
   item.value.expirationDateEstimated = false
 }
+
+// Weight (kg per item) and price (€ for the receipt line) – empty field = unknown
+function toNumber(value: string): number | null {
+  const n = Number(value.replace(',', '.'))
+  return value.trim() && Number.isFinite(n) && n >= 0 ? n : null
+}
+const weightText = computed({
+  get: () => (item.value.weightKg != null ? String(item.value.weightKg).replace('.', ',') : ''),
+  set: (v: string) => (item.value.weightKg = toNumber(v)),
+})
+const priceText = computed({
+  get: () => (item.value.price != null ? item.value.price.toFixed(2).replace('.', ',') : ''),
+  set: (v: string) => (item.value.price = toNumber(v)),
+})
 </script>
 
 <template>
@@ -73,6 +87,16 @@ function onDateChange() {
         <span>Best before <em v-if="item.expirationDateEstimated">· AI estimate</em></span>
         <input v-model="item.expirationDate" type="date" @change="onDateChange" />
       </label>
+
+      <label class="field">
+        <span>Weight per item (kg)</span>
+        <input v-model.lazy="weightText" type="text" inputmode="decimal" placeholder="e.g. 0,5" />
+      </label>
+
+      <label class="field">
+        <span>Price on receipt (€)</span>
+        <input v-model.lazy="priceText" type="text" inputmode="decimal" placeholder="e.g. 2,49" />
+      </label>
     </div>
   </article>
 </template>
@@ -99,7 +123,7 @@ function onDateChange() {
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-muted); }
 .field em { font-style: normal; color: var(--fresh-amber-text); }
-select, input[type='date'] {
+select, input[type='date'], input[inputmode='decimal'] {
   height: 36px; padding: 0 8px; width: 100%;
   border: 1px solid var(--color-border); border-radius: var(--radius-sm);
   background: var(--color-surface); color: var(--color-text);

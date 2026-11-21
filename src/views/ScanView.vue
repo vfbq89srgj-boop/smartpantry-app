@@ -134,6 +134,8 @@ async function confirm() {
       suggestedStoragePlace: i.suggestedStoragePlace as StoragePlace,
       expirationDate: i.expirationDate,
       expirationDateEstimated: i.expirationDateEstimated,
+      weightKg: i.weightKg ?? null, // from the receipt – used by the Impact tab
+      price: i.price ?? null,
     })),
     reference.value.date,
     reference.value.source,

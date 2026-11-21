@@ -20,6 +20,8 @@ export interface ScannedItem {
   expirationDate: string | null
   expirationDateEstimated: boolean
   estimationNote: string | null
+  weightKg?: number | null // net weight of ONE unit, read from the receipt ("500g" → 0.5)
+  price?: number | null    // EUR for the whole receipt line
 }
 
 /** The whole analysis (FileAnalysisDto) */
@@ -75,19 +77,19 @@ export async function analyzeReceipt(image: Blob, force = false): Promise<Receip
 
 async function demoAnalysis(): Promise<ReceiptAnalysis> {
   await new Promise((r) => setTimeout(r, 1800)) // pretend the AI is thinking
-  const item = (name: string, quantity: number | null, category: string, place: StoragePlace, days: number, estimated = true): ScannedItem => ({
+  const item = (name: string, quantity: number | null, category: string, place: StoragePlace, days: number, estimated = true, weightKg: number | null = null, price: number | null = null): ScannedItem => ({
     name, unreadable: false, quantity, category, suggestedStoragePlace: place, storageNote: null,
-    expirationDate: inDays(days), expirationDateEstimated: estimated, estimationNote: null,
+    expirationDate: inDays(days), expirationDateEstimated: estimated, estimationNote: null, weightKg, price,
   })
   return {
     referenceDate: inDays(0),
     referenceDateSource: 'image',
     items: [
-      item('Fresh whole milk', 1, 'fresh_milk', 'Refrigerator', 6),
-      item('Chicken breast', 1, 'meat', 'Refrigerator', 2, false),
-      item('Cherry tomatoes', 1, 'vegetables', 'Pantry', 7),
-      item('Mozzarella', 2, 'cheese', 'Refrigerator', 14, false),
-      item('Basmati rice', 1, 'dry_goods', 'Pantry', 540),
+      item('Fresh whole milk', 1, 'fresh_milk', 'Refrigerator', 6, true, 1.03, 1.39),
+      item('Chicken breast', 1, 'meat', 'Refrigerator', 2, false, 0.4, 6.49),
+      item('Cherry tomatoes', 1, 'vegetables', 'Pantry', 7, true, 0.25, 1.99),
+      item('Mozzarella', 2, 'cheese', 'Refrigerator', 14, false, 0.125, 1.98),
+      item('Basmati rice', 1, 'dry_goods', 'Pantry', 540, true, 1, 2.49),
       {
         name: 'Unreadable item', unreadable: true, quantity: null, category: 'other', suggestedStoragePlace: null,
         storageNote: null, expirationDate: null, expirationDateEstimated: false, estimationNote: null,

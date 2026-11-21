@@ -27,6 +27,8 @@ export interface PantryItem {
   suggestedStoragePlace: StoragePlace;
   expirationDate: string | null; // "YYYY-MM-DD"
   expirationDateEstimated: boolean;
+  weightKg?: number | null; // net weight of ONE unit (from the receipt)
+  price?: number | null; // EUR for the whole receipt line
   status: ItemStatus; // step 5 – saved in the backend via PATCH /Items/{id}/status
   statusChangedAt: string | null; // when it was marked eaten / thrown away
 }
