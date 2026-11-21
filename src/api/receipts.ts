@@ -7,6 +7,7 @@
 */
 import type { StoragePlace } from '../data/pantry'
 import { apiConfigured, apiFetch } from './client'
+import { inDays } from '../lib/date'
 
 /** One item as the AI returns it (FoodItemDto) */
 export interface ScannedItem {
@@ -71,11 +72,6 @@ export async function analyzeReceipt(image: Blob, force = false): Promise<Receip
 }
 
 // ---------- Demo data ----------
-function inDays(days: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
-}
 
 async function demoAnalysis(): Promise<ReceiptAnalysis> {
   await new Promise((r) => setTimeout(r, 1800)) // pretend the AI is thinking

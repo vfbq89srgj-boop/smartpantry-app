@@ -7,6 +7,7 @@
 */
 import { computed, reactive } from 'vue'
 import { apiConfigured, apiFetch } from '../api/client'
+import { inDays, localDateString } from '../lib/date'
 
 export type StoragePlace = 'Refrigerator' | 'Freezer' | 'Pantry' | 'Room Temperature'
 export type ItemStatus = 'in_stock' | 'eaten' | 'thrown_away'
@@ -23,12 +24,6 @@ export interface PantryItem {
   statusChangedAt: string | null // when it was marked eaten / thrown away
 }
 
-/** Date string "YYYY-MM-DD" that is `days` away from today */
-function inDays(days: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
-}
 
 const sampleItems: PantryItem[] = [
   { id: 1, name: 'Milk', quantity: 1, category: 'fresh_milk', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(0), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
@@ -178,7 +173,7 @@ export async function addItems(newItems: NewItem[], referenceDate: string, refer
 /** Whole days from today until the date (negative = already expired) */
 export function daysLeft(date: string | null): number | null {
   if (!date) return null
-  const today = new Date(new Date().toISOString().slice(0, 10))
+  const today = new Date(localDateString())
   return Math.round((new Date(date).getTime() - today.getTime()) / 86_400_000)
 }
 
