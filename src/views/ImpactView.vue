@@ -233,12 +233,12 @@ h2 { font-size: 16px; font-weight: 600; }
 
 .fallback { padding: 10px 14px; border-radius: var(--radius-md); background: var(--fresh-amber-bg); color: var(--fresh-amber-text); font-size: 13px; font-weight: 500; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -8px; }
-.custom { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 10px; padding: 12px 14px; }
+/* two date fields side by side, "Show" on its own row – fits every phone width */
+.custom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; gap: 10px; padding: 12px 14px; }
 .custom label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 500; color: var(--color-text-muted); }
-.custom input { height: 40px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 15px; -webkit-appearance: none; appearance: none; }
-.apply { height: 40px; padding: 0 16px; border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-on-primary); font-size: 14px; font-weight: 600; }
+.custom input { height: 40px; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 15px; -webkit-appearance: none; appearance: none; width: 100%; min-width: 0; box-sizing: border-box; text-align: left; }
+.apply { grid-column: 1 / -1; width: 100%; height: 44px; padding: 0 16px; border-radius: var(--radius-sm); background: var(--color-primary); color: var(--color-on-primary); font-size: 14px; font-weight: 600; }
 .apply:disabled { opacity: 0.45; }
-@media (max-width: 380px) { .custom { grid-template-columns: 1fr 1fr; } .apply { grid-column: 1 / -1; } }
 .chip { padding: 7px 14px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text-muted); font-size: 13px; font-weight: 500; }
 .chip.active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary); }
 
