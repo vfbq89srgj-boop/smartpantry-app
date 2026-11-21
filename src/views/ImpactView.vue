@@ -8,6 +8,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { Car, Check, Euro, Minus, Plus, Trash, Trophy, Users, Weight } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
+import PullIndicator from '../components/PullIndicator.vue'
+import { usePullToRefresh } from '../lib/pullToRefresh'
 import { calculateImpact, impactState, loadImpact, periodDays, setHouseholdSize } from '../data/impact'
 import { inDays, localDateString } from '../lib/date'
 import { FACTORS_VERSION } from '../data/impactFactors'
@@ -23,6 +25,7 @@ const periods = [
 ]
 
 onMounted(loadImpact)
+const { pull, refreshing } = usePullToRefresh(loadImpact)
 
 const impact = computed(() =>
   impactState.stats
@@ -87,6 +90,7 @@ async function resolve(id: number, status: ItemStatus) {
   <PageHeader title="Impact" subtitle="What happens to the food you buy" />
 
   <main class="page">
+    <PullIndicator :pull="pull" :refreshing="refreshing" />
     <div class="chips" role="group" aria-label="Period">
       <button v-for="p in periods" :key="p.days" class="chip" :class="{ active: !impactState.custom && !showCustom && impactState.days === p.days }" @click="changePeriod(p.days)">
         {{ p.label }}

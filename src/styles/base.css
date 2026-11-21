@@ -3,6 +3,7 @@
 
 html, body {
   margin: 0;
+  overscroll-behavior-y: contain; /* no browser reload / bounce – we do pull-to-refresh ourselves */
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font);
