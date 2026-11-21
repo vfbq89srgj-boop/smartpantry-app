@@ -5,8 +5,10 @@ import { useRoute, useRouter } from 'vue-router'
 import TabBar from './components/TabBar.vue'
 import SplashScreen from './components/SplashScreen.vue'
 import { session } from './data/auth'
-import { loadItems } from './data/pantry'
-import { loadShoppingList } from './data/shoppingList'
+import { loadItems, pantry } from './data/pantry'
+import { loadShoppingList, shoppingList } from './data/shoppingList'
+import { impactState } from './data/impact'
+import { recipeState } from './data/recipes'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,7 +27,15 @@ watch(
     if (userId) {
       loadItems()
       loadShoppingList()
-    } else if (previous) router.replace('/login')
+    } else if (previous) {
+      // Signed out: forget this user's data, so the next account never sees it for a moment
+      pantry.items = []
+      shoppingList.entries = []
+      impactState.stats = null
+      recipeState.recipes = []
+      recipeState.basedOn = []
+      router.replace('/login')
+    }
   },
   { immediate: true },
 )

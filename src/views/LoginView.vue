@@ -7,7 +7,17 @@ import symbol from "../assets/logo/pantryx-zeichen.svg";
 import { displayName, signIn } from "../data/auth";
 
 const router = useRouter();
-const email = ref("");
+// The last email used on this phone is remembered, so only the password is left to enter.
+// The password itself is never stored by the app – that is the job of the iPhone's password manager.
+const EMAIL_KEY = "pantryx.lastEmail";
+function savedEmail(): string {
+  try {
+    return localStorage.getItem(EMAIL_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+const email = ref(savedEmail());
 const password = ref("");
 const error = ref("");
 const busy = ref(false);
@@ -26,6 +36,11 @@ async function submit() {
     return;
   }
 
+  try {
+    localStorage.setItem(EMAIL_KEY, email.value.trim());
+  } catch {
+    // storage not available – fine
+  }
   welcome.value = true;
   await new Promise((r) => setTimeout(r, 1800));
   router.replace("/");
@@ -45,7 +60,10 @@ async function submit() {
         <input
           v-model="email"
           type="email"
-          autocomplete="email"
+          autocomplete="username"
+          inputmode="email"
+          autocorrect="off"
+          spellcheck="false"
           autocapitalize="off"
           required />
       </label>

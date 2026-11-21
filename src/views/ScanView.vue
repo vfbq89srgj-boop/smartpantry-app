@@ -239,7 +239,7 @@ async function confirm() {
     <!-- 4. Review list -->
     <section v-else class="review-list">
       <p class="summary">
-        We found <strong>{{ items.length }} items</strong>. Check
+        We found <strong>{{ items.length }} item{{ items.length === 1 ? "" : "s" }}</strong>. Check
         them, then add them to your pantry.
       </p>
       <ReviewItem
@@ -264,7 +264,7 @@ async function confirm() {
       class="btn-primary"
       :disabled="openIssues > 0 || !items.length || saving"
       @click="confirm">
-      {{ saving ? "Saving…" : `Add ${items.length} items to pantry` }}
+      {{ saving ? "Saving…" : `Add ${items.length} item${items.length === 1 ? "" : "s"} to pantry` }}
     </button>
   </div>
 </template>

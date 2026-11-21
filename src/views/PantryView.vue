@@ -126,8 +126,11 @@ function undo() {
   const id = toast.value.id;
   toast.value = null;
   setStatus(id, "in_stock").then((error) => {
-    if (error)
+    if (error) {
       toast.value = { id: -1, message: error, canUndo: false };
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => (toast.value = null), 4000);
+    }
   });
 }
 </script>
@@ -136,7 +139,7 @@ function undo() {
   <PageHeader
     mark
     title="Pantry"
-    :subtitle="`${bySoonestExpiry.length} items · what expires first is on top`" />
+    :subtitle="`${bySoonestExpiry.length} item${bySoonestExpiry.length === 1 ? '' : 's'} · what expires first is on top`" />
 
   <main class="page">
     <PullIndicator :pull="pull" :refreshing="refreshing" :dragging="dragging" />
@@ -236,6 +239,12 @@ function undo() {
         </div>
       </article>
     </TransitionGroup>
+
+    <!-- Filter has no items, but the pantry is not empty -->
+    <div v-else-if="activeFilter !== 'all' && bySoonestExpiry.length" class="card empty">
+      <p class="empty-title">Nothing stored here</p>
+      <p class="empty-text">You have no items in this storage place right now.</p>
+    </div>
 
     <!-- Empty state -->
     <div v-else class="card empty">

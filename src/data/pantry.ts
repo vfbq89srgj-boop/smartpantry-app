@@ -242,7 +242,7 @@ export async function loadItems() {
     pantry.items = all;
   } catch {
     pantry.error =
-      "Could not load your pantry. Is the backend running?";
+      "Could not load your pantry. Pull down to try again.";
   } finally {
     pantry.loading = false;
   }

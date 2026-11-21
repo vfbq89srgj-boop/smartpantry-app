@@ -58,7 +58,7 @@ function addMissing() {
     <section v-if="steps.length">
       <h2>Steps</h2>
       <ol class="steps">
-        <li v-for="s in steps" :key="s.number"><span class="num">{{ s.number }}</span>{{ s.step }}</li>
+        <li v-for="(s, i) in steps" :key="i"><span class="num">{{ s.number }}</span>{{ s.step }}</li>
       </ol>
     </section>
 

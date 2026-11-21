@@ -6,7 +6,6 @@ import { apiConfigured, apiFetch } from "./client";
 import { pantry } from "../data/pantry";
 import { daysLeft } from "../data/pantry";
 
-// TODO: confirm the exact path with Benny
 const STATS_PATH = "/api/v1/Statistics";
 
 export interface StatsItem {
@@ -116,9 +115,10 @@ function demoStats(days: number): Stats {
       statusChangedAt: i.statusChangedAt,
       expirationDate: i.expirationDate,
       expirationDateEstimated: i.expirationDateEstimated,
-      remainingQuantity: i.status === "in_stock" ? q : 0,
-      eatenQuantity: i.status === "eaten" ? q : 0,
-      discardedQuantity: i.status === "thrown_away" ? q : 0,
+      // counters first (partial use, e.g. "2 of 6 thrown away"), else derived from the status
+      remainingQuantity: i.remainingQuantity ?? (i.status === "in_stock" ? q : 0),
+      eatenQuantity: i.eatenQuantity ?? (i.status === "eaten" ? q : 0),
+      discardedQuantity: i.discardedQuantity ?? (i.status === "thrown_away" ? q : 0),
     };
   });
   const sum = (f: (i: StatsItem) => number) =>

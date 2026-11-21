@@ -3,14 +3,25 @@
   Shows the 3 best recipes for the food that expires first.
 -->
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, Clock, CookingPot, RotateCcw } from '@lucide/vue'
 import { loadRecipes, recipeState } from '../data/recipes'
+import { pantry } from '../data/pantry'
 
 const router = useRouter()
 
-onMounted(loadRecipes)
+// Right after the app starts the pantry may still be loading – wait for it,
+// otherwise the screen would wrongly say "nothing needs using up".
+onMounted(() => {
+  if (!pantry.loading) loadRecipes()
+})
+watch(
+  () => pantry.loading,
+  (loading) => {
+    if (!loading) loadRecipes()
+  },
+)
 </script>
 
 <template>
@@ -25,7 +36,7 @@ onMounted(loadRecipes)
       <span v-for="name in recipeState.basedOn" :key="name" class="pill">{{ name }}</span>
     </p>
 
-    <div v-if="recipeState.loading" class="center">
+    <div v-if="recipeState.loading || (pantry.loading && !recipeState.recipes.length)" class="center">
       <div class="spinner" />
       <p>Finding recipes for your food…</p>
     </div>
