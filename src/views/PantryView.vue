@@ -14,9 +14,12 @@ import { addToList, isOnList } from '../data/shoppingList'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import UndoToast from '../components/UndoToast.vue'
-import { pantry, bySoonestExpiry, daysLeft, remainingOf, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
+import PullIndicator from '../components/PullIndicator.vue'
+import { usePullToRefresh } from '../lib/pullToRefresh'
+import { pantry, bySoonestExpiry, daysLeft, loadItems, remainingOf, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
 
 const router = useRouter()
+const { pull, refreshing } = usePullToRefresh(loadItems)
 
 // ----- Filter by storage place -----
 const filters: { label: string; value: StoragePlace | 'all' }[] = [
@@ -95,6 +98,7 @@ function undo() {
   <PageHeader title="Pantry" :subtitle="`${bySoonestExpiry.length} items · what expires first is on top`" />
 
   <main class="page">
+    <PullIndicator :pull="pull" :refreshing="refreshing" />
     <!-- Filter chips (scroll sideways on small phones) -->
     <div class="chips">
       <button

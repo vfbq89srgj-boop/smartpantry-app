@@ -8,12 +8,16 @@ import { useRouter } from 'vue-router'
 import { Camera, ChevronRight, ClipboardList, CookingPot, LogIn, LogOut, ScanText } from '@lucide/vue'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
-import { bySoonestExpiry, inStock, pantry } from '../data/pantry'
+import PullIndicator from '../components/PullIndicator.vue'
+import { usePullToRefresh } from '../lib/pullToRefresh'
+import { bySoonestExpiry, inStock, loadItems, pantry } from '../data/pantry'
 import { session, signOut } from '../data/auth'
-import { openEntries } from '../data/shoppingList'
+import { loadShoppingList, openEntries } from '../data/shoppingList'
 import { apiConfigured } from '../api/client'
 
 const router = useRouter()
+// Home shows pantry items and the shopping-list count → refresh both
+const { pull, refreshing } = usePullToRefresh(() => Promise.all([loadItems(), loadShoppingList()]))
 
 // The 3 items that expire first – "Use these first"
 const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
@@ -23,6 +27,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
   <PageHeader title="PantryX" subtitle="Waste less. Eat better." />
 
   <main class="page">
+    <PullIndicator :pull="pull" :refreshing="refreshing" />
     <!-- Receipt scanner hero card -->
     <section class="hero">
       <div class="hero-top">
