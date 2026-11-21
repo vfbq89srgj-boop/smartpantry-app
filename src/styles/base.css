@@ -12,6 +12,19 @@ html, body {
   touch-action: manipulation; /* no double-tap zoom */
 }
 
+/* Feels like a native app: no text selection or copy menu on long press.
+   Input fields stay selectable, so typing and editing still work. */
+html, body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /*
   Android Chrome reloads the page when you pull down at the top – that would fight our own
   pull-to-refresh. iOS has no such reload, so it keeps its native bounce and momentum scrolling.
