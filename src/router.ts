@@ -22,6 +22,7 @@ export const router = createRouter({
     { path: '/', component: HomeView },
     // Placeholders – each one gets its own screen in the next steps
     { path: '/pantry', component: PantryView },
+    { path: '/pantry/:id/edit', component: () => import('./views/EditItemView.vue') },
     { path: '/shopping-list', component: ShoppingListView },
     { path: '/impact', component: ImpactView },
     { path: '/scan', component: ScanView },

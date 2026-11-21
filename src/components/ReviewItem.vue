@@ -89,7 +89,7 @@ const priceText = computed({
       </label>
 
       <label class="field">
-        <span>Weight per item (kg)</span>
+        <span>Total weight (kg)</span>
         <input v-model.lazy="weightText" type="text" inputmode="decimal" placeholder="e.g. 0,5" />
       </label>
 

@@ -27,7 +27,9 @@ export interface PantryItem {
   suggestedStoragePlace: StoragePlace;
   expirationDate: string | null; // "YYYY-MM-DD"
   expirationDateEstimated: boolean;
-  weightKg?: number | null; // net weight of ONE unit (from the receipt)
+  weightKg?: number | null; // total weight of the receipt line (all units)
+  storageNote?: string | null;
+  estimationNote?: string | null;
   price?: number | null; // EUR for the whole receipt line
   status: ItemStatus; // step 5 – saved in the backend via PATCH /Items/{id}/status
   statusChangedAt: string | null; // when it was marked eaten / thrown away
@@ -274,6 +276,63 @@ const apiStatus: Record<ItemStatus, string> = {
   rolls back if the server refuses. Returns an error message or null.
 */
 /** How many units of the item are still in the pantry */
+/** Fields that can be changed later (PUT /api/v1/Items/{id}) */
+export interface ItemEdit {
+  name: string;
+  quantity: number; // purchased amount – at least what was already eaten / thrown away
+  category: string;
+  suggestedStoragePlace: StoragePlace;
+  expirationDate: string | null;
+  expirationDateEstimated: boolean;
+  weightKg: number | null; // total weight of the purchase
+  price: number | null; // total price of the purchase
+}
+
+/** Units already eaten or thrown away – quantity can't go below this */
+export function usedOf(item: PantryItem): number {
+  return (item.eatenQuantity ?? 0) + (item.discardedQuantity ?? 0);
+}
+
+/**
+  Edit a saved item. PUT replaces the whole item, so notes the user can't see
+  are sent back unchanged. Eaten / thrown-away counters stay as they are.
+  Returns an error message or null.
+*/
+export async function updateItem(id: number, edit: ItemEdit): Promise<string | null> {
+  const item = pantry.items.find((i) => i.id === id);
+  if (!item) return "Item not found.";
+
+  if (!apiConfigured) {
+    Object.assign(item, edit, { remainingQuantity: edit.quantity - usedOf(item) });
+    return null;
+  }
+  try {
+    const res = await apiFetch(`/api/v1/Items/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...edit,
+        unreadable: false,
+        storageNote: item.storageNote ?? null,
+        estimationNote: item.estimationNote ?? null,
+      }),
+    });
+    if (res.ok) {
+      await loadItems(); // quantities / status may have changed
+      return null;
+    }
+    if (res.status === 401) return "Your login has expired. Please sign in again.";
+    if (res.status === 404) return "This item no longer exists.";
+    if (res.status === 400) {
+      const body = await res.json().catch(() => null);
+      return body?.message ?? "Please check your input.";
+    }
+    return "Saving failed. Please try again.";
+  } catch {
+    return "No connection to the server.";
+  }
+}
+
 export function remainingOf(item: PantryItem): number {
   return item.remainingQuantity ?? item.quantity ?? 1;
 }

@@ -23,7 +23,7 @@ export interface StatsItem {
   eatenQuantity: number;
   discardedQuantity: number;
   // coming from the receipt later (Benny) – optional until then
-  weightKg?: number | null;
+  weightKg?: number | null; // total weight of the row (all units)
   price?: number | null;     // EUR for the whole receipt line
   unitPrice?: number | null; // EUR per unit (calculated by the backend)
 }
@@ -72,14 +72,16 @@ function daysAgo(days: number): string {
 */
 export async function fetchStats(days: number, range?: DateRange): Promise<Stats> {
   if (!apiConfigured) return demoStats(days);
-  if (!range && days !== ALL_TIME_DAYS && ![7, 30, 90].includes(days)) range = { from: daysAgo(days - 1), to: daysAgo(0) };
+  // Official selectors (frontend-api.openapi.json): 7d · 30d · year · all · custom (never combined with days)
+  const presets: Record<number, string> = { 7: "7d", 30: "30d", 365: "year", [ALL_TIME_DAYS]: "all" };
+  if (!range && !presets[days] && days !== 90) range = { from: daysAgo(days - 1), to: daysAgo(0) };
   let res: Response;
   try {
     const query = range
       ? `period=custom&startDate=${range.from}&endDate=${range.to}`
-      : days === ALL_TIME_DAYS
-        ? "period=all"
-        : `days=${days}`;
+      : presets[days]
+        ? `period=${presets[days]}`
+        : `days=${days}`; // 90 – only via the legacy selector
     res = await apiFetch(`${STATS_PATH}?${query}`);
   } catch {
     throw new Error("No connection to the server.");

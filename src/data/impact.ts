@@ -65,7 +65,9 @@ export function periodDays(): number {
   return impactState.custom ? daysBetween(impactState.custom.from, impactState.custom.to) : impactState.days
 }
 
-const weightOf = (i: StatsItem) => i.weightKg ?? factorFor(i.category).weightKg
+// Weight per unit: backend weightKg is the TOTAL of the receipt line → divide by quantity
+const weightOf = (i: StatsItem) =>
+  (i.weightKg != null && i.quantity ? i.weightKg / i.quantity : null) ?? factorFor(i.category).weightKg
 // Price per unit: from the backend, else line price ÷ quantity, else the category default
 const priceOf = (i: StatsItem) =>
   i.unitPrice ?? (i.price != null && i.quantity ? i.price / i.quantity : null) ?? factorFor(i.category).priceEur

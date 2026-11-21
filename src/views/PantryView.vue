@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Camera, Check, Minus, Plus, ShoppingCart, Trash } from '@lucide/vue'
+import { Camera, Check, Minus, Pencil, Plus, ShoppingCart, Trash } from '@lucide/vue'
 import { addToList, isOnList } from '../data/shoppingList'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
@@ -66,13 +66,15 @@ async function mark(item: PantryItem, status: ItemStatus) {
   const left = remainingOf(item)
   const amount = amountOf(item)
   const partial = amount < left
+  // Backend "undo" (status in_stock) resets the whole purchase – only safe if nothing was used before
+  const untouched = (item.eatenQuantity ?? 0) + (item.discardedQuantity ?? 0) === 0
   const failed = setStatus(item.id, status, partial ? amount : undefined)
   delete amounts.value[item.id]
   const text = status === 'eaten' ? 'eaten' : 'thrown away'
   toast.value = {
     id: item.id,
     message: partial ? `${amount}× ${item.name} ${text}` : `${item.name} marked as ${text}`,
-    canUndo: !partial,
+    canUndo: !partial && untouched,
   }
   window.clearTimeout(toastTimer)
   toastTimer = window.setTimeout(() => (toast.value = null), 4000)
@@ -146,6 +148,10 @@ function undo() {
             @click="addToList(item.name, 'pantry')"
           >
             <component :is="isOnList(item.name) ? Check : ShoppingCart" :size="16" :stroke-width="2" />
+          </button>
+          <!-- Edit name, quantity, date, weight, price … (PUT /Items/{id}) -->
+          <button class="action cart" :aria-label="`Edit ${item.name}`" @click="router.push(`/pantry/${item.id}/edit`)">
+            <Pencil :size="16" :stroke-width="2" />
           </button>
         </div>
       </article>

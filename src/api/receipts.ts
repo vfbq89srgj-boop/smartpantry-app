@@ -20,7 +20,7 @@ export interface ScannedItem {
   expirationDate: string | null
   expirationDateEstimated: boolean
   estimationNote: string | null
-  weightKg?: number | null // net weight of ONE unit, read from the receipt ("500g" → 0.5)
+  weightKg?: number | null // total weight of the receipt line in kg, all units together ("2 × 500g" → 1.0)
   price?: number | null    // EUR for the whole receipt line
 }
 
@@ -88,7 +88,7 @@ async function demoAnalysis(): Promise<ReceiptAnalysis> {
       item('Fresh whole milk', 1, 'fresh_milk', 'Refrigerator', 6, true, 1.03, 1.39),
       item('Chicken breast', 1, 'meat', 'Refrigerator', 2, false, 0.4, 6.49),
       item('Cherry tomatoes', 1, 'vegetables', 'Pantry', 7, true, 0.25, 1.99),
-      item('Mozzarella', 2, 'cheese', 'Refrigerator', 14, false, 0.125, 1.98),
+      item('Mozzarella', 2, 'cheese', 'Refrigerator', 14, false, 0.25, 1.98),
       item('Basmati rice', 1, 'dry_goods', 'Pantry', 540, true, 1, 2.49),
       {
         name: 'Unreadable item', unreadable: true, quantity: null, category: 'other', suggestedStoragePlace: null,
