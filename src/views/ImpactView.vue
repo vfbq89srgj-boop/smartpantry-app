@@ -32,8 +32,9 @@ function changePeriod(days: number) {
 }
 
 // Numbers are estimates → round them, never fake precision
-const kg = (v: number) => (v < 10 ? v.toFixed(1) : Math.round(v).toString()).replace('.', ',')
-const eur = (v: number) => Math.round(v).toString()
+// Always 2 decimals, Austrian style: 1,25
+const kg = (v: number) => v.toFixed(2).replace('.', ',')
+const eur = (v: number) => v.toFixed(2).replace('.', ',')
 const pct = (v: number) => Math.round(v * 100)
 
 // Ring for the usage rate
@@ -144,17 +145,17 @@ async function resolve(id: number, status: ItemStatus) {
       <section class="tiles">
         <div class="tile weight">
           <span class="tile-icon"><Weight :size="20" :stroke-width="2" /></span>
-          <p class="tile-val">≈ {{ kg(impact.wastedKg) }} kg</p>
+          <p class="tile-val">{{ kg(impact.wastedKg) }} kg</p>
           <p class="tile-label">food thrown away</p>
         </div>
         <div class="tile money">
           <span class="tile-icon"><Euro :size="20" :stroke-width="2" /></span>
-          <p class="tile-val">≈ {{ eur(impact.moneyLost) }} €</p>
+          <p class="tile-val">{{ eur(impact.moneyLost) }} €</p>
           <p class="tile-label">money in the bin</p>
         </div>
         <div class="tile co2 wide">
           <span class="tile-icon"><Car :size="20" :stroke-width="2" /></span>
-          <p class="tile-val">≈ {{ kg(impact.co2Min) }}–{{ kg(impact.co2Max) }} kg CO₂e</p>
+          <p class="tile-val">{{ kg(impact.co2Min) }}–{{ kg(impact.co2Max) }} kg CO₂e</p>
           <p class="tile-label">wasted with that food – about {{ Math.round(impact.carKm) }} km by car</p>
         </div>
       </section>

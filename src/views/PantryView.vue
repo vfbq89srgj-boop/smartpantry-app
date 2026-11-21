@@ -23,15 +23,17 @@ const filters: { label: string; value: StoragePlace | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Fridge', value: 'Refrigerator' },
   { label: 'Freezer', value: 'Freezer' },
-  { label: 'Pantry', value: 'Pantry' },
-  { label: 'Room temp.', value: 'Room Temperature' },
+  { label: 'Pantry', value: 'Pantry' }, // includes "Room Temperature" from older scans
 ]
 const activeFilter = ref<StoragePlace | 'all'>('all')
 
 const visibleItems = computed(() =>
   activeFilter.value === 'all'
     ? bySoonestExpiry.value
-    : bySoonestExpiry.value.filter((i) => i.suggestedStoragePlace === activeFilter.value),
+    : bySoonestExpiry.value.filter((i) => {
+        const place = i.suggestedStoragePlace === 'Room Temperature' ? 'Pantry' : i.suggestedStoragePlace
+        return place === activeFilter.value
+      }),
 )
 
 /** Expired items get highlighted buttons (step 5) */

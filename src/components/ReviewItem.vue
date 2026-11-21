@@ -13,7 +13,8 @@ import type { ScannedItem } from '../api/receipts'
 const item = defineModel<ScannedItem>({ required: true })
 defineEmits<{ remove: [] }>()
 
-const places = Object.keys(storageLabel) as StoragePlace[]
+// Only three places in the app – "Room Temperature" from the AI counts as Pantry
+const places: StoragePlace[] = ['Refrigerator', 'Freezer', 'Pantry']
 const icon = computed(() => categoryOf(item.value.category).icon)
 
 /** Still needs fixing? (no real name or no storage place) */

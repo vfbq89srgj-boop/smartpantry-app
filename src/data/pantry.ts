@@ -30,14 +30,14 @@ const sampleItems: PantryItem[] = [
   { id: 2, name: 'Baby spinach', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(2), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
   { id: 3, name: 'Minced beef', quantity: 1, category: 'minced_meat', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(1), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
   { id: 4, name: 'Greek yogurt', quantity: 2, category: 'dairy', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(3), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
-  { id: 5, name: 'Tomatoes', quantity: 6, category: 'vegetables', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(5), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 5, name: 'Tomatoes', quantity: 6, category: 'vegetables', suggestedStoragePlace: 'Pantry', expirationDate: inDays(5), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
   { id: 6, name: 'Eggs', quantity: 10, category: 'eggs', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(18), expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
-  { id: 7, name: 'Wholegrain bread', quantity: 1, category: 'bakery', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-1), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 7, name: 'Wholegrain bread', quantity: 1, category: 'bakery', suggestedStoragePlace: 'Pantry', expirationDate: inDays(-1), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
   { id: 8, name: 'Pasta', quantity: 2, category: 'dry_goods', suggestedStoragePlace: 'Pantry', expirationDate: inDays(320), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
   { id: 9, name: 'Frozen peas', quantity: 1, category: 'frozen', suggestedStoragePlace: 'Freezer', expirationDate: inDays(180), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
-  { id: 10, name: 'Apples', quantity: 4, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(9), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
+  { id: 10, name: 'Apples', quantity: 4, category: 'fruit', suggestedStoragePlace: 'Pantry', expirationDate: inDays(9), expirationDateEstimated: true, status: 'in_stock', statusChangedAt: null },
   { id: 11, name: 'Oat drink', quantity: 1, category: 'plant_based', suggestedStoragePlace: 'Pantry', expirationDate: null, expirationDateEstimated: false, status: 'in_stock', statusChangedAt: null },
-  { id: 12, name: 'Bananas', quantity: 3, category: 'fruit', suggestedStoragePlace: 'Room Temperature', expirationDate: inDays(-2), expirationDateEstimated: true, status: 'eaten', statusChangedAt: inDays(-1) },
+  { id: 12, name: 'Bananas', quantity: 3, category: 'fruit', suggestedStoragePlace: 'Pantry', expirationDate: inDays(-2), expirationDateEstimated: true, status: 'eaten', statusChangedAt: inDays(-1) },
   { id: 13, name: 'Lettuce', quantity: 1, category: 'leafy_greens', suggestedStoragePlace: 'Refrigerator', expirationDate: inDays(-3), expirationDateEstimated: true, status: 'thrown_away', statusChangedAt: inDays(-1) },
 ]
 
@@ -203,5 +203,5 @@ export const storageLabel: Record<StoragePlace, string> = {
   Refrigerator: 'Fridge',
   Freezer: 'Freezer',
   Pantry: 'Pantry',
-  'Room Temperature': 'Room temp.',
+  'Room Temperature': 'Pantry', // shown as Pantry – the app only uses Fridge / Freezer / Pantry
 }

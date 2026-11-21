@@ -73,7 +73,10 @@ async function analyze(force: boolean) {
   duplicate.value = false;
   try {
     const analysis = await analyzeReceipt(lastImage, force);
-    items.value = analysis.items;
+    // The app only knows Fridge / Freezer / Pantry – "Room Temperature" from the AI becomes Pantry
+    items.value = analysis.items.map((i) =>
+      i.suggestedStoragePlace === 'Room Temperature' ? { ...i, suggestedStoragePlace: 'Pantry' } : i,
+    );
     reference.value = {
       date: analysis.referenceDate,
       source: analysis.referenceDateSource,

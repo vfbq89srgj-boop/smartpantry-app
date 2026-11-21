@@ -85,7 +85,7 @@ async function demoAnalysis(): Promise<ReceiptAnalysis> {
     items: [
       item('Fresh whole milk', 1, 'fresh_milk', 'Refrigerator', 6),
       item('Chicken breast', 1, 'meat', 'Refrigerator', 2, false),
-      item('Cherry tomatoes', 1, 'vegetables', 'Room Temperature', 7),
+      item('Cherry tomatoes', 1, 'vegetables', 'Pantry', 7),
       item('Mozzarella', 2, 'cheese', 'Refrigerator', 14, false),
       item('Basmati rice', 1, 'dry_goods', 'Pantry', 540),
       {
