@@ -3,6 +3,8 @@
   Change a colour here and it changes everywhere in the app.
 */
 :root {
+  color-scheme: light; /* light design only: no automatic dark-mode colours for the system bars, inputs, scrollbars */
+
   /* Colours */
   --color-bg: #faf9f4;          /* cream app background */
   --color-surface: #ffffff;     /* white cards */
