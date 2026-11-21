@@ -3,14 +3,28 @@
   Fades out by itself and tells App.vue when it is done.
 -->
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import logoWhite from '../assets/logo/pantryx-logo-weiss.svg'
 
 const emit = defineEmits<{ done: [] }>()
 const visible = ref(true)
 
+// While the splash is up, paint the page itself green too: if the iPhone leaves a thin strip at the
+// top (status bar / Dynamic Island area) uncovered, that strip is then green instead of cream.
+const root = document.documentElement
+const previousBackground = root.style.background
+// Android Chrome / PWA colours the status bar from <meta name="theme-color"> → green during the splash
+const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+const previousTheme = themeMeta?.content
+
 onMounted(() => {
+  root.style.background = 'var(--color-brand)'
+  if (themeMeta) themeMeta.content = '#1e4d3a'
   window.setTimeout(() => (visible.value = false), 1500)
+})
+onUnmounted(() => {
+  root.style.background = previousBackground
+  if (themeMeta && previousTheme) themeMeta.content = previousTheme
 })
 </script>
 
@@ -25,7 +39,14 @@ onMounted(() => {
 <style scoped>
 .splash {
   position: fixed;
-  inset: 0;
+  /* reach into the safe areas (notch / Dynamic Island on top, home bar at the bottom) on purpose */
+  top: calc(-1 * env(safe-area-inset-top));
+  right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom));
+  left: 0;
+  /* always at least the full screen, also when browser bars are shown or hidden (lvh = large viewport) */
+  min-height: 100vh;
+  min-height: 100lvh;
   z-index: 100;
   display: grid;
   place-items: center;
