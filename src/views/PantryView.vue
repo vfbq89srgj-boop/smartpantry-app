@@ -9,12 +9,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Camera, Check, ShoppingCart, Trash } from '@lucide/vue'
+import { Camera, Check, Minus, Plus, ShoppingCart, Trash } from '@lucide/vue'
 import { addToList, isOnList } from '../data/shoppingList'
 import PageHeader from '../components/PageHeader.vue'
 import ItemRow from '../components/ItemRow.vue'
 import UndoToast from '../components/UndoToast.vue'
-import { pantry, bySoonestExpiry, daysLeft, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
+import { pantry, bySoonestExpiry, daysLeft, remainingOf, setStatus, type ItemStatus, type PantryItem, type StoragePlace } from '../data/pantry'
 
 const router = useRouter()
 
@@ -43,18 +43,39 @@ function isExpired(item: PantryItem) {
 }
 
 // ----- Eaten / thrown away with Undo -----
-const toast = ref<{ id: number; message: string } | null>(null)
+const toast = ref<{ id: number; message: string; canUndo: boolean } | null>(null)
 let toastTimer: number | undefined
 
+// ----- Quantity: how many units the next "Eaten" / "Thrown away" applies to -----
+const amounts = ref<Record<number, number>>({})
+
+/** Selected amount, clamped to what is left (default: 1 unit) */
+function amountOf(item: PantryItem) {
+  const left = remainingOf(item)
+  return Math.min(Math.max(amounts.value[item.id] ?? 1, 1), left)
+}
+
+function changeAmount(item: PantryItem, step: number) {
+  amounts.value[item.id] = Math.min(Math.max(amountOf(item) + step, 1), remainingOf(item))
+}
+
 async function mark(item: PantryItem, status: ItemStatus) {
-  const failed = setStatus(item.id, status)
-  const text = status === 'eaten' ? 'marked as eaten' : 'marked as thrown away'
-  toast.value = { id: item.id, message: `${item.name} ${text}` }
+  const left = remainingOf(item)
+  const amount = amountOf(item)
+  const partial = amount < left
+  const failed = setStatus(item.id, status, partial ? amount : undefined)
+  delete amounts.value[item.id]
+  const text = status === 'eaten' ? 'eaten' : 'thrown away'
+  toast.value = {
+    id: item.id,
+    message: partial ? `${amount}× ${item.name} ${text}` : `${item.name} marked as ${text}`,
+    canUndo: !partial,
+  }
   window.clearTimeout(toastTimer)
   toastTimer = window.setTimeout(() => (toast.value = null), 4000)
   const error = await failed
   if (error) {
-    toast.value = { id: -1, message: error }
+    toast.value = { id: -1, message: error, canUndo: false }
     window.clearTimeout(toastTimer)
     toastTimer = window.setTimeout(() => (toast.value = null), 4000)
   }
@@ -65,7 +86,7 @@ function undo() {
   const id = toast.value.id
   toast.value = null
   setStatus(id, 'in_stock').then((error) => {
-    if (error) toast.value = { id: -1, message: error }
+    if (error) toast.value = { id: -1, message: error, canUndo: false }
   })
 }
 </script>
@@ -95,6 +116,17 @@ function undo() {
       <article v-for="item in visibleItems" :key="item.id" class="card item">
         <ItemRow :item="item" />
         <p v-if="item.expirationDateEstimated" class="estimated">Expiry date estimated by AI</p>
+        <!-- Quantity: only when more than one unit is left -->
+        <div v-if="remainingOf(item) > 1" class="amount">
+          <span class="amount-label">How many?</span>
+          <button class="step" aria-label="Fewer" :disabled="amountOf(item) <= 1" @click="changeAmount(item, -1)">
+            <Minus :size="14" :stroke-width="2" />
+          </button>
+          <span class="amount-value">{{ amountOf(item) }} / {{ remainingOf(item) }}</span>
+          <button class="step" aria-label="More" :disabled="amountOf(item) >= remainingOf(item)" @click="changeAmount(item, 1)">
+            <Plus :size="14" :stroke-width="2" />
+          </button>
+        </div>
         <div class="actions" :class="{ urgent: isExpired(item) }">
           <button class="action eaten" @click="mark(item, 'eaten')">
             <Check :size="16" :stroke-width="2" /> Eaten
@@ -126,7 +158,7 @@ function undo() {
   </main>
 
   <Transition name="fade">
-    <UndoToast v-if="toast" :message="toast.message" @undo="undo" />
+    <UndoToast v-if="toast" :message="toast.message" :can-undo="toast.canUndo" @undo="undo" />
   </Transition>
 </template>
 
@@ -163,6 +195,19 @@ function undo() {
 .list { display: flex; flex-direction: column; gap: 10px; }
 .item { padding: 0 14px 12px; }
 .estimated { margin: -6px 0 10px 52px; font-size: 11px; color: var(--color-text-muted); }
+.amount { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+.amount-label { flex: 1; font-size: 13px; color: var(--color-text-muted); }
+.amount-value { min-width: 48px; text-align: center; font-size: 14px; font-weight: 600; }
+.step {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--color-surface-soft);
+  color: var(--color-primary);
+}
+.step:disabled { opacity: 0.4; }
 .actions { display: flex; gap: 8px; }
 .action {
   flex: 1;

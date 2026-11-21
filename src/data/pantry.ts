@@ -15,7 +15,10 @@ export type ItemStatus = 'in_stock' | 'eaten' | 'thrown_away'
 export interface PantryItem {
   id: number
   name: string
-  quantity: number | null
+  quantity: number | null        // originally purchased amount (never changes)
+  remainingQuantity?: number     // what is still left (backend); missing = same as quantity
+  eatenQuantity?: number
+  discardedQuantity?: number
   category: string               // backend category code, e.g. "fresh_milk"
   suggestedStoragePlace: StoragePlace
   expirationDate: string | null  // "YYYY-MM-DD"
@@ -111,23 +114,66 @@ const apiStatus: Record<ItemStatus, string> = { in_stock: 'in_stock', eaten: 'ea
   Backend: PATCH /api/v1/Items/{id}/status. The screen updates immediately and
   rolls back if the server refuses. Returns an error message or null.
 */
-export async function setStatus(id: number, status: ItemStatus): Promise<string | null> {
+/** How many units of the item are still in the pantry */
+export function remainingOf(item: PantryItem): number {
+  return item.remainingQuantity ?? item.quantity ?? 1
+}
+
+/**
+  `quantity` (optional) = only that many units, e.g. "ate 2 of 6". Without it the whole
+  remaining stock is processed. Partial updates keep the item in stock while units remain.
+  For "in_stock" (undo) the whole item is reset – partial undo is not supported by the backend.
+*/
+export async function setStatus(id: number, status: ItemStatus, quantity?: number): Promise<string | null> {
   const item = pantry.items.find((i) => i.id === id)
   if (!item) return null
-  const before = { status: item.status, statusChangedAt: item.statusChangedAt }
-  item.status = status
-  item.statusChangedAt = status === 'in_stock' ? null : new Date().toISOString()
+  const before = {
+    status: item.status,
+    statusChangedAt: item.statusChangedAt,
+    remainingQuantity: item.remainingQuantity,
+    eatenQuantity: item.eatenQuantity,
+    discardedQuantity: item.discardedQuantity,
+  }
+  const total = item.quantity ?? 1
+  const remaining = remainingOf(item)
+  const amount = status === 'in_stock' ? total : Math.min(quantity ?? remaining, remaining)
+
+  // optimistic update
+  if (status === 'in_stock') {
+    item.remainingQuantity = total
+    item.eatenQuantity = 0
+    item.discardedQuantity = 0
+    item.status = 'in_stock'
+    item.statusChangedAt = null
+  } else {
+    item.remainingQuantity = remaining - amount
+    if (status === 'eaten') item.eatenQuantity = (item.eatenQuantity ?? 0) + amount
+    else item.discardedQuantity = (item.discardedQuantity ?? 0) + amount
+    item.status = item.remainingQuantity > 0 ? 'in_stock' : status
+    item.statusChangedAt = new Date().toISOString()
+  }
   if (!apiConfigured) return null
 
   try {
+    const body: { status: string; quantity?: number } = { status: apiStatus[status] }
+    if (quantity !== undefined && status !== 'in_stock') body.quantity = amount
     const res = await apiFetch(`/api/v1/Items/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: apiStatus[status] }),
+      body: JSON.stringify(body),
     })
     if (res.ok) {
-      const data = (await res.json()) as { statusChangedAt: string | null }
+      const data = (await res.json()) as {
+        status: string
+        statusChangedAt: string | null
+        remainingQuantity: number
+        eatenQuantity: number
+        discardedQuantity: number
+      }
       item.statusChangedAt = data.statusChangedAt
+      item.remainingQuantity = data.remainingQuantity
+      item.eatenQuantity = data.eatenQuantity
+      item.discardedQuantity = data.discardedQuantity
       return null
     }
     Object.assign(item, before)

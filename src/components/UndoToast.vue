@@ -5,14 +5,15 @@
 <script setup lang="ts">
 import { Undo2 } from '@lucide/vue'
 
-defineProps<{ message: string }>()
+// canUndo = false for partial changes (the backend can only reset a whole item)
+withDefaults(defineProps<{ message: string; canUndo?: boolean }>(), { canUndo: true })
 defineEmits<{ undo: [] }>()
 </script>
 
 <template>
   <div class="toast" role="status">
     <span>{{ message }}</span>
-    <button class="undo" @click="$emit('undo')">
+    <button v-if="canUndo" class="undo" @click="$emit('undo')">
       <Undo2 :size="16" :stroke-width="2" />
       Undo
     </button>

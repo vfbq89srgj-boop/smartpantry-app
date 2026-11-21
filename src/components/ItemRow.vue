@@ -1,7 +1,7 @@
 <!-- One food item in a list: icon tile, name, "2× · Fridge", expiry badge -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { storageLabel, type PantryItem } from '../data/pantry'
+import { remainingOf, storageLabel, type PantryItem } from '../data/pantry'
 import { categoryOf } from '../data/categories'
 import ExpiryBadge from './ExpiryBadge.vue'
 
@@ -9,7 +9,10 @@ const props = defineProps<{ item: PantryItem }>()
 
 const category = computed(() => categoryOf(props.item.category))
 const details = computed(() => {
-  const qty = props.item.quantity ? `${props.item.quantity}× · ` : ''
+  const total = props.item.quantity ?? 0
+  const left = remainingOf(props.item)
+  // partially used: "4 of 6 left", otherwise "2×"
+  const qty = total && left < total ? `${left} of ${total} left · ` : total ? `${total}× · ` : ''
   return qty + storageLabel[props.item.suggestedStoragePlace]
 })
 </script>
