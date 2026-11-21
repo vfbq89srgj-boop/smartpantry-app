@@ -28,6 +28,7 @@ import {
   type ScannedItem,
 } from "../api/receipts";
 import ScanIcon from "../components/ScanIcon.vue";
+import ScanLoader from "../components/ScanLoader.vue";
 import { addItems, type StoragePlace } from "../data/pantry";
 
 const router = useRouter();
@@ -202,11 +203,7 @@ async function confirm() {
     </section>
 
     <!-- 2. Waiting for the AI -->
-    <section v-else-if="step === 'analyzing'" class="center">
-      <div class="spinner" />
-      <p class="hero-title">Reading your photo…</p>
-      <p class="hero-text">This takes a few seconds.</p>
-    </section>
+    <ScanLoader v-else-if="step === 'analyzing'" />
 
     <!-- 3a. Easter egg: the AI saw a person instead of food -->
     <section v-else-if="step === 'error' && human" class="center">
