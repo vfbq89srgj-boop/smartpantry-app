@@ -1,0 +1,94 @@
+/*
+  Impact calculations (agreed with the team):
+  1. Usage rate      = eaten / (eaten + thrown away)               – measured, no estimate
+  2. Thrown away kg  = Σ thrown-away quantity × weight per item     – estimated
+  3. Money lost      = Σ thrown-away quantity × price per item      – estimated
+  4. CO2e wasted     = kg × CO2e factor (shown as a range) + car km  – estimated
+  5. Your household vs. the Austrian average (kg per person per week)
+  Weight / price come from the receipt when available, otherwise from the category defaults.
+*/
+import { reactive } from 'vue'
+import { fetchStats, type Stats, type StatsItem } from '../api/stats'
+import { AVG_WASTE_KG_PER_PERSON_WEEK, CAR_KG_CO2_PER_KM, factorFor } from './impactFactors'
+
+const HOUSEHOLD_KEY = 'pantrix.householdSize'
+
+function savedHousehold(): number {
+  try {
+    const n = Number(localStorage.getItem(HOUSEHOLD_KEY))
+    return n >= 1 && n <= 8 ? n : 1
+  } catch {
+    return 1
+  }
+}
+
+export const impactState = reactive({
+  days: 30,
+  householdSize: savedHousehold(),
+  stats: null as Stats | null,
+  loading: false,
+  error: '',
+})
+
+export function setHouseholdSize(n: number) {
+  impactState.householdSize = Math.min(8, Math.max(1, n))
+  try {
+    localStorage.setItem(HOUSEHOLD_KEY, String(impactState.householdSize))
+  } catch {
+    // not saved – fine
+  }
+}
+
+export async function loadImpact() {
+  impactState.loading = true
+  impactState.error = ''
+  try {
+    impactState.stats = await fetchStats(impactState.days)
+  } catch (e) {
+    impactState.error = e instanceof Error ? e.message : 'Something went wrong.'
+  } finally {
+    impactState.loading = false
+  }
+}
+
+const weightOf = (i: StatsItem) => i.weightKg ?? factorFor(i.category).weightKg
+const priceOf = (i: StatsItem) => i.unitPrice ?? factorFor(i.category).priceEur
+
+export function calculateImpact(stats: Stats, days: number, householdSize: number) {
+  const eaten = stats.summary.itemsEaten
+  const wasted = stats.summary.itemsWasted
+  const finished = eaten + wasted
+  const thrown = stats.items.filter((i) => i.discardedQuantity > 0)
+
+  const wastedKg = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i), 0)
+  const moneyLost = thrown.reduce((a, i) => a + i.discardedQuantity * priceOf(i), 0)
+  const co2 = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i) * factorFor(i.category).co2PerKg, 0)
+  const co2Min = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i) * factorFor(i.category).co2Min, 0)
+  const co2Max = thrown.reduce((a, i) => a + i.discardedQuantity * weightOf(i) * factorFor(i.category).co2Max, 0)
+
+  const weeks = Math.max(1, days / 7)
+  const yourKgPerPersonWeek = wastedKg / weeks / householdSize
+
+  // Categories thrown away most (by quantity)
+  const byCategory = new Map<string, number>()
+  for (const i of thrown) byCategory.set(i.category, (byCategory.get(i.category) ?? 0) + i.discardedQuantity)
+  const topWasted = [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+  return {
+    eaten,
+    wasted,
+    finished,
+    usageRate: finished ? eaten / finished : null,
+    wastedKg,
+    moneyLost,
+    co2,
+    co2Min,
+    co2Max,
+    carKm: co2 / CAR_KG_CO2_PER_KM,
+    yourKgPerPersonWeek,
+    avgKgPerPersonWeek: AVG_WASTE_KG_PER_PERSON_WEEK,
+    belowAverage: yourKgPerPersonWeek <= AVG_WASTE_KG_PER_PERSON_WEEK,
+    topWasted,
+    expired: stats.expiredItems.filter((i) => i.remainingQuantity > 0),
+  }
+}

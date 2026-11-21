@@ -12,6 +12,7 @@ import { useRouter } from 'vue-router'
 import { Camera, ChevronLeft, ImageUp, Plus, RotateCcw, ScanText } from '@lucide/vue'
 import ReviewItem from '../components/ReviewItem.vue'
 import { resizeImage } from '../lib/image'
+import { localDateString } from '../lib/date'
 import { analyzeReceipt, ScanError, type ScannedItem } from '../api/receipts'
 import { addItems, type StoragePlace } from '../data/pantry'
 
@@ -21,7 +22,7 @@ type Step = 'start' | 'analyzing' | 'review' | 'error'
 const step = ref<Step>('start')
 const errorMessage = ref('')
 const items = ref<ScannedItem[]>([])
-const reference = ref({ date: new Date().toISOString().slice(0, 10), source: 'currentDate' })
+const reference = ref({ date: localDateString(), source: 'currentDate' })
 const saving = ref(false)
 const saveError = ref('')
 

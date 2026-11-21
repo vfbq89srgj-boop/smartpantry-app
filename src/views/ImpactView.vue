@@ -1,0 +1,251 @@
+<!--
+  Impact tab – AI4Green.
+  Measured: usage rate (eaten vs. thrown away).
+  Estimated (clearly labelled): kg, € and CO2e of thrown-away food, compared with the Austrian average.
+  Plus: "These items have expired – eaten or thrown away?" to keep the numbers honest.
+-->
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { Car, Check, Euro, Minus, Plus, Trash, Trophy, Users, Weight } from '@lucide/vue'
+import PageHeader from '../components/PageHeader.vue'
+import { calculateImpact, impactState, loadImpact, setHouseholdSize } from '../data/impact'
+import { FACTORS_VERSION } from '../data/impactFactors'
+import { categoryOf } from '../data/categories'
+import { setStatus, type ItemStatus } from '../data/pantry'
+
+onMounted(loadImpact)
+
+const impact = computed(() =>
+  impactState.stats ? calculateImpact(impactState.stats, impactState.days, impactState.householdSize) : null,
+)
+
+function changePeriod(days: number) {
+  impactState.days = days
+  loadImpact()
+}
+
+// Numbers are estimates → round them, never fake precision
+const kg = (v: number) => (v < 10 ? v.toFixed(1) : Math.round(v).toString()).replace('.', ',')
+const eur = (v: number) => Math.round(v).toString()
+const pct = (v: number) => Math.round(v * 100)
+
+// Ring for the usage rate
+const R = 52
+const CIRC = 2 * Math.PI * R
+const ringOffset = computed(() => CIRC * (1 - (impact.value?.usageRate ?? 0)))
+
+// Bar: you vs. Ø household (scale = the larger of both, at least 2 kg)
+const barMax = computed(() => Math.max(2, impact.value?.yourKgPerPersonWeek ?? 0, impact.value?.avgKgPerPersonWeek ?? 0))
+
+// Tips for the categories thrown away most
+const tips: Record<string, string> = {
+  bakery: 'Freeze bread in slices and toast it straight from the freezer.',
+  fruit: 'Overripe fruit works great in smoothies or banana bread.',
+  vegetables: 'Soft vegetables are perfect for soup or a stir-fry.',
+  leafy_greens: 'Buy smaller bags – or blend leftover greens into a pesto.',
+  dairy: 'Yogurt and cream are often fine after the date – look, smell, taste.',
+  fresh_milk: 'Milk past its date? Check it first – it is often still good.',
+  plant_based: 'Plant drinks last longer unopened – open one at a time.',
+}
+
+async function resolve(id: number, status: ItemStatus) {
+  await setStatus(id, status)
+  await loadImpact()
+}
+</script>
+
+<template>
+  <PageHeader title="Impact" subtitle="What happens to the food you buy" />
+
+  <main class="page">
+    <div class="chips" role="group" aria-label="Period">
+      <button v-for="d in [7, 30]" :key="d" class="chip" :class="{ active: impactState.days === d }" @click="changePeriod(d)">
+        Last {{ d }} days
+      </button>
+    </div>
+
+    <p v-if="impactState.loading && !impact" class="card note">Calculating your impact…</p>
+    <p v-else-if="impactState.error" class="card note error">{{ impactState.error }}</p>
+
+    <template v-else-if="impact">
+      <!-- 1. Usage rate (measured) -->
+      <section class="card hero">
+        <svg viewBox="0 0 128 128" class="ring" aria-hidden="true">
+          <circle cx="64" cy="64" :r="R" class="ring-bg" />
+          <circle v-if="impact.usageRate !== null" cx="64" cy="64" :r="R" class="ring-fg" :stroke-dasharray="CIRC" :stroke-dashoffset="ringOffset" />
+        </svg>
+        <div class="ring-text">
+          <template v-if="impact.usageRate !== null">
+            <p class="big">{{ pct(impact.usageRate) }} %</p>
+            <p class="small">eaten</p>
+          </template>
+          <p v-else class="small">No data yet</p>
+        </div>
+        <div class="hero-copy">
+          <h2>Usage rate</h2>
+          <p v-if="impact.finished">You ate <strong>{{ impact.eaten }}</strong> of <strong>{{ impact.finished }}</strong> finished items and threw away {{ impact.wasted }}.</p>
+          <p v-else>Mark items as “Eaten” or “Thrown away” in your pantry to see your rate.</p>
+        </div>
+      </section>
+
+      <!-- 2. Expired items – keep the numbers honest -->
+      <section v-if="impact.expired.length" class="card expired">
+        <h2>{{ impact.expired.length }} item{{ impact.expired.length > 1 ? 's have' : ' has' }} expired – eaten or thrown away?</h2>
+        <p class="muted">Tell us what happened, so your impact stays accurate.</p>
+        <ul>
+          <li v-for="i in impact.expired.slice(0, 5)" :key="i.id">
+            <span class="icon-tile"><component :is="categoryOf(i.category).icon" :size="18" :stroke-width="1.75" /></span>
+            <span class="name">{{ i.name }}</span>
+            <button class="mini eaten" :aria-label="`${i.name} eaten`" @click="resolve(i.id, 'eaten')"><Check :size="16" /></button>
+            <button class="mini thrown" :aria-label="`${i.name} thrown away`" @click="resolve(i.id, 'thrown_away')"><Trash :size="16" /></button>
+          </li>
+        </ul>
+        <RouterLink v-if="impact.expired.length > 5" to="/pantry" class="link">See all in your pantry</RouterLink>
+      </section>
+
+      <!-- 3. You vs. the Austrian average (gamification) -->
+      <section class="card versus">
+        <div class="versus-head">
+          <h2><Trophy :size="18" /> Beat the average</h2>
+          <div class="household" aria-label="People in your household">
+            <Users :size="15" />
+            <button aria-label="Fewer people" @click="setHouseholdSize(impactState.householdSize - 1)"><Minus :size="14" /></button>
+            <span>{{ impactState.householdSize }}</span>
+            <button aria-label="More people" @click="setHouseholdSize(impactState.householdSize + 1)"><Plus :size="14" /></button>
+          </div>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <span class="bar-label">You</span>
+            <div class="bar"><div class="fill you" :class="{ over: !impact.belowAverage }" :style="{ width: `${(impact.yourKgPerPersonWeek / barMax) * 100}%` }" /></div>
+            <span class="bar-val">{{ kg(impact.yourKgPerPersonWeek) }} kg</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Ø Austria</span>
+            <div class="bar"><div class="fill avg" :style="{ width: `${(impact.avgKgPerPersonWeek / barMax) * 100}%` }" /></div>
+            <span class="bar-val">{{ kg(impact.avgKgPerPersonWeek) }} kg</span>
+          </div>
+        </div>
+        <p class="verdict" :class="{ good: impact.belowAverage }">
+          <template v-if="impact.belowAverage">Great – you throw away less than the average household. Keep it up! 🌱</template>
+          <template v-else>You’re above the average this period – use the “Use these first” list and recipe ideas to catch up.</template>
+        </p>
+        <p class="muted small-print">Food thrown away per person and week, estimated. Ø = 69 kg per person and year (Austria 2024).</p>
+      </section>
+
+      <!-- 4. Thrown away: kg, money, CO2e (estimated) -->
+      <section class="tiles">
+        <div class="card tile">
+          <Weight :size="20" :stroke-width="1.75" />
+          <p class="tile-val">≈ {{ kg(impact.wastedKg) }} kg</p>
+          <p class="tile-label">food thrown away</p>
+        </div>
+        <div class="card tile">
+          <Euro :size="20" :stroke-width="1.75" />
+          <p class="tile-val">≈ {{ eur(impact.moneyLost) }} €</p>
+          <p class="tile-label">money in the bin</p>
+        </div>
+        <div class="card tile wide">
+          <Car :size="20" :stroke-width="1.75" />
+          <p class="tile-val">≈ {{ kg(impact.co2Min) }}–{{ kg(impact.co2Max) }} kg CO₂e</p>
+          <p class="tile-label">wasted with that food – about {{ Math.round(impact.carKm) }} km by car</p>
+        </div>
+      </section>
+
+      <!-- 5. Most wasted + tip -->
+      <section v-if="impact.topWasted.length" class="card top">
+        <h2>Thrown away most</h2>
+        <ul>
+          <li v-for="[cat, n] in impact.topWasted" :key="cat">
+            <span class="icon-tile"><component :is="categoryOf(cat).icon" :size="18" :stroke-width="1.75" /></span>
+            <div>
+              <p class="name">{{ categoryOf(cat).label }} <span class="muted">· {{ n }}×</span></p>
+              <p v-if="tips[cat]" class="muted">{{ tips[cat] }}</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- How we calculate (transparency, EU rules against vague green claims) -->
+      <details class="card how">
+        <summary>How we calculate</summary>
+        <p><strong>Measured:</strong> what you mark as eaten or thrown away. The usage rate uses only these numbers.</p>
+        <p><strong>Estimated:</strong> weight and price come from your receipt when available, otherwise from typical package sizes and Austrian prices per category. CO₂e uses factors per kg food from ifeu 2020 (German Environment Agency) and Umweltbundesamt Austria, shown as a range. Car km: 107 g CO₂/km (average new car, EU 2024).</p>
+        <p><strong>Not included:</strong> shopping trips, cooking, disposal. Self-reported data usually under-counts waste.</p>
+        <p class="muted">Factors {{ FACTORS_VERSION }}</p>
+      </details>
+    </template>
+  </main>
+</template>
+
+<style scoped>
+.page { display: flex; flex-direction: column; gap: 12px; padding: 0 var(--page-padding); }
+h2 { font-size: 16px; font-weight: 600; }
+.muted { color: var(--color-text-muted); font-size: 13px; }
+.note { padding: 18px; font-size: 14px; color: var(--color-text-muted); }
+.note.error { color: var(--fresh-red-text); }
+
+.chips { display: flex; gap: 8px; margin-top: -8px; }
+.chip { padding: 7px 14px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text-muted); font-size: 13px; font-weight: 500; }
+.chip.active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-primary); }
+
+/* Usage rate */
+.hero { position: relative; display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 16px; padding: 18px; }
+.ring { width: 112px; height: 112px; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--color-tile); stroke-width: 12; }
+.ring-fg { fill: none; stroke: var(--color-primary); stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+.ring-text { position: absolute; left: 18px; top: 50%; width: 112px; transform: translateY(-50%); text-align: center; }
+.big { font-size: 26px; font-weight: 700; line-height: 1; }
+.small { font-size: 12px; color: var(--color-text-muted); }
+.hero-copy p { margin-top: 4px; font-size: 14px; color: var(--color-text-muted); }
+.hero-copy strong { color: var(--color-text); }
+
+/* Expired check */
+.expired { padding: 16px; border: 1.5px solid var(--fresh-amber-text); background: var(--fresh-amber-bg); }
+.expired h2 { color: var(--fresh-amber-text); }
+.expired ul, .top ul { margin: 10px 0 0; padding: 0; list-style: none; }
+.expired li, .top li { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.icon-tile { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-primary); }
+.top .icon-tile { background: var(--color-surface-soft); }
+.name { flex: 1; font-size: 14px; font-weight: 600; }
+.mini { display: grid; place-items: center; width: 40px; height: 36px; border-radius: var(--radius-sm); }
+.mini.eaten { background: var(--color-primary); color: var(--color-on-primary); }
+.mini.thrown { background: var(--fresh-red-bg); color: var(--fresh-red-text); }
+.link { display: inline-block; margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--color-primary); }
+
+/* Versus */
+.versus { padding: 16px; }
+.versus-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.versus-head h2 { display: flex; align-items: center; gap: 6px; }
+.household { display: flex; align-items: center; gap: 6px; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--color-text-muted); }
+.household button { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--color-tile); color: var(--color-primary); }
+.bars { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 10px; }
+.bar-row { display: grid; grid-template-columns: 72px 1fr 58px; align-items: center; gap: 10px; font-size: 13px; }
+.bar { height: 12px; border-radius: 6px; background: var(--color-surface-soft); overflow: hidden; }
+.fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+.fill.you { background: var(--color-primary); }
+.fill.you.over { background: var(--fresh-amber-text); }
+.fill.avg { background: #b8c2b4; }
+.bar-val { text-align: right; font-weight: 600; white-space: nowrap; }
+.verdict { font-size: 14px; font-weight: 500; color: var(--fresh-amber-text); }
+.verdict.good { color: var(--color-primary); }
+.small-print { margin-top: 6px; font-size: 11px; }
+
+/* Tiles */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile { padding: 14px 16px; color: var(--color-primary); }
+.tile.wide { grid-column: 1 / -1; }
+.tile-val { margin-top: 6px; font-size: 22px; font-weight: 700; color: var(--color-text); white-space: nowrap; }
+.tile-label { font-size: 12px; color: var(--color-text-muted); }
+
+.top { padding: 16px; }
+.top .name { font-size: 14px; }
+
+.how { padding: 14px 16px; font-size: 13px; color: var(--color-text-muted); }
+.how summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-primary); }
+.how p { margin-top: 8px; }
+.how strong { color: var(--color-text); }
+.how { margin-bottom: 8px; }
+
+@media (prefers-reduced-motion: reduce) { .ring-fg, .fill { transition: none; } }
+</style>
