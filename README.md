@@ -1,4 +1,4 @@
-# Pantrix – Smart Pantry app
+# PantryX – Smart Pantry app
 
 The iOS app for the Smart Pantry project (ÖH Hackathon FHV, AI4Green Challenge).
 Built with **Vue 3 + TypeScript + Vite**; it will be wrapped as a native iOS app

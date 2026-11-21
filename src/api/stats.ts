@@ -24,7 +24,7 @@ export interface StatsItem {
   discardedQuantity: number;
   // coming from the receipt later (Benny) – optional until then
   weightKg?: number | null;
-  unitPrice?: number | null;
+  price?: number | null; // EUR per unit (DB column food_items.price)
 }
 
 export interface Stats {
@@ -38,22 +38,55 @@ export interface Stats {
   };
   items: StatsItem[];
   expiredItems: StatsItem[];
+  /** set by the app when the backend refused the period and a shorter one is shown */
+  fallbackDays?: number;
 }
+
+/** Longest period the backend accepts today (allowed: 7, 30, 90) */
+const MAX_BACKEND_DAYS = 90;
 
 /** Period used for "All time" (10 years) */
 export const ALL_TIME_DAYS = 3650;
 
-export async function fetchStats(days: number): Promise<Stats> {
+/** Custom period, both dates "YYYY-MM-DD" (inclusive) */
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+/** "2026-11-21" → "21.11.2026" (date format of the backend's custom period) */
+const toBackendDate = (d: string) => d.split("-").reverse().join(".");
+
+/** "YYYY-MM-DD" that is `days` before today (local time) */
+function daysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/*
+  7 / 30 / 90 days → ?days=…
+  everything else (year, all time, custom) → Benny's custom period:
+    ?period=custom&startDate=01.10.2025&endDate=11.12.2026
+*/
+export async function fetchStats(days: number, range?: DateRange): Promise<Stats> {
   if (!apiConfigured) return demoStats(days);
+  if (!range && ![7, 30, 90].includes(days)) range = { from: daysAgo(days - 1), to: daysAgo(0) };
   let res: Response;
   try {
-    res = await apiFetch(`${STATS_PATH}?days=${days}`);
+    const query = range
+      ? `period=custom&startDate=${toBackendDate(range.from)}&endDate=${toBackendDate(range.to)}`
+      : `days=${days}`;
+    res = await apiFetch(`${STATS_PATH}?${query}`);
   } catch {
     throw new Error("No connection to the server.");
   }
   if (res.ok) return (await res.json()) as Stats;
-  // Backend may limit the period – then show one year instead of "all time"
-  if (res.status === 400 && days > 365) return fetchStats(365);
+  // Backend refuses longer / custom periods (for now only 7, 30, 90) → show the last 90 days instead
+  if (res.status === 400 && (days !== MAX_BACKEND_DAYS || range)) {
+    const shorter = await fetchStats(MAX_BACKEND_DAYS);
+    return { ...shorter, fallbackDays: MAX_BACKEND_DAYS };
+  }
   if (res.status === 401)
     throw new Error("Your login has expired. Please sign in again.");
   if (res.status === 404)

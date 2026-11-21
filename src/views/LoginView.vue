@@ -35,7 +35,7 @@ async function submit() {
   <main class="login">
     <div class="brand">
       <div class="logo"><Leaf :size="34" :stroke-width="1.75" /></div>
-      <h1>Pantrix</h1>
+      <h1>PantryX</h1>
       <p>Waste less. Eat better.</p>
     </div>
 
@@ -65,7 +65,7 @@ async function submit() {
 
     <Transition name="fade">
       <div v-if="welcome" class="welcome" role="status">
-        <p class="welcome-text">Welcome to Pantrix</p>
+        <p class="welcome-text">Welcome to PantryX</p>
         <div class="welcome-logo">
           <Leaf :size="60" :stroke-width="1.75" />
         </div>

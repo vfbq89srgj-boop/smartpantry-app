@@ -16,6 +16,7 @@ export interface PantryItem {
   id: number
   name: string
   quantity: number | null
+  remainingQuantity?: number     // from GET /Items – what is still at home (quantity minus eaten / thrown away)
   category: string               // backend category code, e.g. "fresh_milk"
   suggestedStoragePlace: StoragePlace
   expirationDate: string | null  // "YYYY-MM-DD"

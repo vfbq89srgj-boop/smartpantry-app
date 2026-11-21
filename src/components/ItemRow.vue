@@ -9,7 +9,9 @@ const props = defineProps<{ item: PantryItem }>()
 
 const category = computed(() => categoryOf(props.item.category))
 const details = computed(() => {
-  const qty = props.item.quantity ? `${props.item.quantity}× · ` : ''
+  // Show what is still at home (e.g. 1 of 2 yogurts left)
+  const left = props.item.remainingQuantity ?? props.item.quantity
+  const qty = left ? `${left}× · ` : ''
   return qty + storageLabel[props.item.suggestedStoragePlace]
 })
 </script>

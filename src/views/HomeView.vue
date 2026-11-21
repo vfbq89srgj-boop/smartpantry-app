@@ -20,7 +20,7 @@ const useFirst = computed(() => bySoonestExpiry.value.slice(0, 3))
 </script>
 
 <template>
-  <PageHeader title="Pantrix" subtitle="Waste less. Eat better." />
+  <PageHeader title="PantryX" subtitle="Waste less. Eat better." />
 
   <main class="page">
     <!-- Receipt scanner hero card -->
