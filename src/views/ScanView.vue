@@ -61,7 +61,14 @@ async function onFileChosen(event: Event) {
   step.value = "analyzing";
   duplicate.value = false;
   try {
-    lastImage = await resizeImage(file);
+    const isPdf =
+      file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if (isPdf && file.size > 10 * 1024 * 1024) {
+      errorMessage.value = "This PDF is too large (max. 10 MB).";
+      step.value = "error";
+      return;
+    }
+    lastImage = isPdf ? file : await resizeImage(file);
   } catch {
     errorMessage.value = "Something went wrong. Please try again.";
     step.value = "error";
@@ -79,7 +86,9 @@ async function analyze(force: boolean) {
     const analysis = await analyzeReceipt(lastImage, force);
     // The app only knows Fridge / Freezer / Pantry – "Room Temperature" from the AI becomes Pantry
     items.value = analysis.items.map((i) =>
-      i.suggestedStoragePlace === 'Room Temperature' ? { ...i, suggestedStoragePlace: 'Pantry' } : i,
+      i.suggestedStoragePlace === "Room Temperature"
+        ? { ...i, suggestedStoragePlace: "Pantry" }
+        : i,
     );
     reference.value = {
       date: analysis.referenceDate,
@@ -172,7 +181,7 @@ async function confirm() {
   <input
     ref="galleryInput"
     type="file"
-    accept="image/*"
+    accept="image/*,application/pdf,.pdf"
     hidden
     @change="onFileChosen" />
 
@@ -191,8 +200,8 @@ async function confirm() {
         <Camera :size="20" :stroke-width="1.75" /> Take photo
       </button>
       <button class="btn-secondary" @click="galleryInput?.click()">
-        <ImageUp :size="20" :stroke-width="1.75" /> Choose from
-        library
+        <ImageUp :size="20" :stroke-width="1.75" /> Choose photo or
+        PDF
       </button>
       <ul class="tips">
         <li>Receipt: lay it flat and fully visible</li>
@@ -207,7 +216,9 @@ async function confirm() {
 
     <!-- 3a. Easter egg: the AI saw a person instead of food -->
     <section v-else-if="step === 'error' && human" class="center">
-      <div class="human-badge"><Snowflake :size="40" :stroke-width="1.5" /></div>
+      <div class="human-badge">
+        <Snowflake :size="40" :stroke-width="1.5" />
+      </div>
       <p class="priceless">Priceless.</p>
       <p class="hero-title">But we can’t store this one.</p>
       <p class="hero-text">{{ errorMessage }}</p>
@@ -239,8 +250,12 @@ async function confirm() {
     <!-- 4. Review list -->
     <section v-else class="review-list">
       <p class="summary">
-        We found <strong>{{ items.length }} item{{ items.length === 1 ? "" : "s" }}</strong>. Check
-        them, then add them to your pantry.
+        We found
+        <strong
+          >{{ items.length }} item{{
+            items.length === 1 ? "" : "s"
+          }}</strong
+        >. Check them, then add them to your pantry.
       </p>
       <ReviewItem
         v-for="(item, i) in items"
@@ -264,7 +279,11 @@ async function confirm() {
       class="btn-primary"
       :disabled="openIssues > 0 || !items.length || saving"
       @click="confirm">
-      {{ saving ? "Saving…" : `Add ${items.length} item${items.length === 1 ? "" : "s"} to pantry` }}
+      {{
+        saving
+          ? "Saving…"
+          : `Add ${items.length} item${items.length === 1 ? "" : "s"} to pantry`
+      }}
     </button>
   </div>
 </template>

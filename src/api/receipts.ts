@@ -54,7 +54,7 @@ export async function analyzeReceipt(image: Blob, force = false): Promise<Receip
   if (!apiConfigured) return demoAnalysis()
 
   const form = new FormData()
-  form.append('image', image, 'receipt.jpg')
+  form.append('image', image, image.type === 'application/pdf' ? 'receipt.pdf' : 'receipt.jpg')
 
   let res: Response
   try {
@@ -72,7 +72,7 @@ export async function analyzeReceipt(image: Blob, force = false): Promise<Receip
     throw new DuplicateReceiptError(body?.message?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null)
   }
   switch (res.status) {
-    case 400: throw new ScanError('This file can’t be used. Please take a photo (JPEG or PNG, max. 10 MB).')
+    case 400: throw new ScanError('This file can’t be used. Please use a photo or PDF (JPEG, PNG or PDF, max. 10 MB).')
     case 401: throw new ScanError('Your login has expired. Please sign in again.')
     case 422: {
       const body = (await res.json().catch(() => null)) as { code?: string } | null
