@@ -7,9 +7,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ChevronLeft, Minus, Plus } from '@lucide/vue'
+import { ChevronLeft, Minus, Plus, Trash2 } from '@lucide/vue'
 import { categories, categoryOf } from '../data/categories'
-import { addItems, pantry, storageLabel, updateItem, usedOf, type StoragePlace } from '../data/pantry'
+import { addItems, deleteItem, pantry, storageLabel, updateItem, usedOf, type StoragePlace } from '../data/pantry'
 import { localDateString } from '../lib/date'
 
 const route = useRoute()
@@ -79,6 +79,26 @@ async function save() {
     ? await addItems([fields], localDateString(), 'manual') // no receipt → no fileHash
     : await updateItem(original!.id, fields)
   saving.value = false
+  if (error) saveError.value = error
+  else router.back()
+}
+
+// Two taps to delete: the first asks, the second deletes
+const confirmingDelete = ref(false)
+let confirmTimer: ReturnType<typeof setTimeout> | undefined
+async function remove() {
+  if (!original) return
+  if (!confirmingDelete.value) {
+    confirmingDelete.value = true
+    confirmTimer = setTimeout(() => (confirmingDelete.value = false), 4000)
+    return
+  }
+  clearTimeout(confirmTimer)
+  saving.value = true
+  saveError.value = ''
+  const error = await deleteItem(original.id)
+  saving.value = false
+  confirmingDelete.value = false
   if (error) saveError.value = error
   else router.back()
 }
@@ -154,6 +174,10 @@ function onDateChange() {
     <button class="btn-primary" :disabled="saving || errors.length > 0" @click="save">
       {{ saving ? 'Saving…' : isNew ? 'Add to pantry' : 'Save changes' }}
     </button>
+
+    <button v-if="!isNew" class="btn-delete" :disabled="saving" @click="remove">
+      <Trash2 :size="16" /> {{ confirmingDelete ? 'Tap again to delete for good' : 'Delete item' }}
+    </button>
   </main>
 
   <main v-else class="page"><p class="card hint-card">This item is no longer in your pantry.</p></main>
@@ -194,4 +218,10 @@ select, input[type='date'], input[inputmode='decimal'] {
 .hint-card { padding: 18px; font-size: 14px; color: var(--color-text-muted); }
 .error { font-size: 13px; font-weight: 500; color: var(--fresh-red-text); }
 .btn-primary:disabled { opacity: 0.45; }
+.btn-delete {
+  display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px;
+  border-radius: var(--radius-md); font-weight: 600; color: var(--fresh-red-text);
+  border: 1px solid var(--fresh-red-text); background: transparent;
+}
+.btn-delete:disabled { opacity: 0.45; }
 </style>

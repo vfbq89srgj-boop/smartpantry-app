@@ -333,6 +333,25 @@ export async function updateItem(id: number, edit: ItemEdit): Promise<string | n
   }
 }
 
+/** Delete an item for good (DELETE /api/v1/Items/{id}). Returns an error message or null. */
+export async function deleteItem(id: number): Promise<string | null> {
+  if (!apiConfigured) {
+    pantry.items = pantry.items.filter((i) => i.id !== id);
+    return null;
+  }
+  try {
+    const res = await apiFetch(`/api/v1/Items/${id}`, { method: "DELETE" });
+    if (res.ok || res.status === 404) {
+      pantry.items = pantry.items.filter((i) => i.id !== id);
+      return null;
+    }
+    if (res.status === 401) return "Your login has expired. Please sign in again.";
+    return "Deleting failed. Please try again.";
+  } catch {
+    return "No connection to the server.";
+  }
+}
+
 export function remainingOf(item: PantryItem): number {
   return item.remainingQuantity ?? item.quantity ?? 1;
 }
